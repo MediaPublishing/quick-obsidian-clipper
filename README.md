@@ -214,6 +214,11 @@ cd quick-obsidian-clipper
 
 ## Changelog
 
+### v2.4.3 (2026-01-14)
+- Added Perplexity fallback timer and safer clipboard handling
+- Fixed Twitter extraction validation and K/M metric parsing
+- Removed unused YouTube handler injection to avoid missing-file errors
+
 ### v2.4.2 (2026-01-14)
 - Added DOMPurify fallback when sanitization fails, returning clean text content
 - Removed stray `text` SVG nodes to avoid transform parsing errors on sites like neon.com

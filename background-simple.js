@@ -139,6 +139,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'CONTENT_EXTRACTED') {
     const tabId = sender.tab?.id;
 
+    if (tabId && (message.data?.source === 'perplexity' || isPerplexitySite(sender.tab?.url || ''))) {
+      clearPerplexityFallback(tabId);
+    }
+
     // Check if this is a pending extraction from archive/medium handler
     if (tabId && pendingExtractions.has(tabId)) {
       const pending = pendingExtractions.get(tabId);
@@ -219,6 +223,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // Handle Perplexity status updates
   if (message.type === 'PERPLEXITY_STATUS') {
     console.log('Perplexity status:', message.status);
+    if (sender.tab?.id) {
+      clearPerplexityFallback(sender.tab.id);
+    }
     if (message.status === 'download_triggered') {
       showNotification(
         'Perplexity Export',
@@ -233,6 +240,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // Handle clip errors from handlers
   if (message.type === 'CLIP_ERROR') {
     console.error('Clip error:', message.error);
+    if (sender.tab?.id && isPerplexitySite(sender.tab?.url || '')) {
+      clearPerplexityFallback(sender.tab.id);
+    }
     showNotification('Clipping Failed', message.error, 'icons/icon48.png');
     sendResponse({ success: false, error: message.error });
     return true;
@@ -968,6 +978,7 @@ async function handlePerplexityPage(tab) {
     }
 
     console.log('Perplexity handler injected');
+    schedulePerplexityFallback(tab.id);
   } catch (error) {
     console.error('Failed to inject Perplexity handler:', error);
 
@@ -977,6 +988,11 @@ async function handlePerplexityPage(tab) {
       'Use Perplexity\'s Share menu → Copy as Markdown, then clip again.',
       'icons/icon48.png'
     );
+    try {
+      await injectContentScript(tab.id);
+    } catch (injectError) {
+      console.warn('Perplexity fallback injection failed:', injectError);
+    }
   }
 }
 
@@ -1013,6 +1029,31 @@ async function injectScriptFilesWithFallback(tabId, primaryFiles, fallbackFiles,
 
 // Track pending extractions by tab ID
 const pendingExtractions = new Map();
+const perplexityFallbackTimers = new Map();
+
+function clearPerplexityFallback(tabId) {
+  const timer = perplexityFallbackTimers.get(tabId);
+  if (timer) {
+    clearTimeout(timer);
+    perplexityFallbackTimers.delete(tabId);
+  }
+}
+
+function schedulePerplexityFallback(tabId, timeoutMs = 12000) {
+  clearPerplexityFallback(tabId);
+
+  const timer = setTimeout(async () => {
+    perplexityFallbackTimers.delete(tabId);
+    try {
+      console.warn('Perplexity handler timed out, falling back to general extraction.');
+      await injectContentScript(tabId);
+    } catch (error) {
+      console.warn('Perplexity fallback injection failed:', error);
+    }
+  }, timeoutMs);
+
+  perplexityFallbackTimers.set(tabId, timer);
+}
 
 // Helper: Handle CAPTCHA on archive.ph - detect, try auto-click, wait for manual if needed
 async function handleArchiveCaptcha(tabId) {
@@ -1833,17 +1874,6 @@ function isArchiveDomain(url) {
 // Handler: YouTube videos with transcript
 async function handleYouTubeVideo(tab) {
   console.log('YouTube video detected, extracting with transcript...');
-
-  const handlerInjected = await injectScriptFilesWithFallback(
-    tab.id,
-    ['src/handlers/youtube-handler.js'],
-    ['youtube-handler.js'],
-    'YouTube handler'
-  );
-
-  if (!handlerInjected) {
-    console.warn('YouTube handler unavailable, continuing with general extraction.');
-  }
 
   await injectContentScript(tab.id);
 

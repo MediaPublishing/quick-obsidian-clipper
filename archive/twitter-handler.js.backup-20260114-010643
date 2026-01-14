@@ -44,10 +44,6 @@ class TwitterHandler {
   async waitForTweet(timeout) {
     const startTime = Date.now();
 
-    // Initial delay to let X.com's React app hydrate
-    console.log('TwitterHandler: Waiting for initial page render...');
-    await this.sleep(1500);
-
     while (Date.now() - startTime < timeout) {
       // Check for tweet article with multiple selectors
       const tweet = document.querySelector('article[data-testid="tweet"]') ||
@@ -55,32 +51,22 @@ class TwitterHandler {
                    document.querySelector('[data-testid="cellInnerDiv"] article');
 
       if (tweet) {
-        // Additional wait to ensure tweet content is fully rendered
-        await this.sleep(500);
-        console.log('TwitterHandler: Tweet found and rendered');
+        console.log('TwitterHandler: Tweet found');
         return;
       }
 
-      await this.sleep(300);
+      await this.sleep(500);
     }
 
-    console.warn('TwitterHandler: Timeout waiting for tweet after', timeout, 'ms');
+    console.warn('TwitterHandler: Timeout waiting for tweet');
   }
 
   extractMainTweet() {
     // Try different selectors for the main tweet
     const tweetArticles = document.querySelectorAll('article[data-testid="tweet"], article[role="article"]');
 
-    console.log('TwitterHandler: Found', tweetArticles?.length || 0, 'tweet articles');
-
     if (!tweetArticles || tweetArticles.length === 0) {
       console.warn('TwitterHandler: No tweet articles found');
-      // Last resort: try to find ANY article element
-      const anyArticle = document.querySelector('article');
-      if (anyArticle) {
-        console.log('TwitterHandler: Found generic article element, trying extraction');
-        return this.extractTweetData(anyArticle);
-      }
       return null;
     }
 
@@ -120,7 +106,7 @@ class TwitterHandler {
       const tweetId = this.extractTweetId(tweetUrl);
 
       // Validate we have at least some content
-      if (!content && (!authorName || authorName === 'Unknown')) {
+      if (!content && !authorName && authorName === 'Unknown') {
         console.warn('TwitterHandler: Could not extract meaningful content from article');
         return null;
       }
@@ -271,7 +257,8 @@ class TwitterHandler {
 
     for (const btn of buttons) {
       const label = btn.getAttribute('aria-label') || btn.textContent || '';
-      const count = this.parseMetricCount(label);
+      const match = label.match(/(\d+[\d,]*)/);
+      const count = match ? parseInt(match[1].replace(/,/g, ''), 10) : 0;
 
       if (label.toLowerCase().includes('like') || btn.querySelector('[data-testid="like"]')) {
         metrics.likes = count;
@@ -284,25 +271,6 @@ class TwitterHandler {
     }
 
     return metrics;
-  }
-
-  parseMetricCount(label) {
-    const match = label.replace(/\s+/g, '').match(/(\d+(?:[.,]\d+)?)([KMB])?/i);
-    if (!match) {
-      return 0;
-    }
-
-    const suffix = (match[2] || '').toUpperCase();
-    if (suffix) {
-      const number = parseFloat(match[1].replace(',', '.'));
-      if (Number.isNaN(number)) {
-        return 0;
-      }
-      const multiplier = suffix === 'K' ? 1e3 : suffix === 'M' ? 1e6 : 1e9;
-      return Math.round(number * multiplier);
-    }
-
-    return parseInt(match[1].replace(/,/g, ''), 10) || 0;
   }
 
   extractTweetUrl(article) {
@@ -440,9 +408,8 @@ class TwitterHandler {
   }
 
   try {
-    console.log('TwitterHandler: Starting extraction for', url);
-    // Increased timeout for slow X.com pages (20 seconds)
-    const data = await handler.extract(20000);
+    console.log('TwitterHandler: Extracting tweet...');
+    const data = await handler.extract(15000);
 
     console.log('TwitterHandler: Sending to background...', data.title);
 

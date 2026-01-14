@@ -32,17 +32,20 @@ console.log('Perplexity Handler loaded');
           item.click();
           await sleep(500);
 
-          // Check if content was copied to clipboard
-          try {
-            const clipboardText = await navigator.clipboard.readText();
-            if (clipboardText && clipboardText.length > 100) {
-              console.log('Perplexity: Got content from clipboard');
-              sendContentToBackground(clipboardText);
-              return;
-            }
-          } catch (e) {
-            console.warn('Perplexity: Could not read clipboard:', e);
+          if (text.includes('download')) {
+            sendStatusToBackground('download_triggered');
+            return;
           }
+
+          const clipboardText = await tryReadClipboard();
+          if (clipboardText && clipboardText.length > 100) {
+            console.log('Perplexity: Got content from clipboard');
+            sendContentToBackground(clipboardText);
+            return;
+          }
+
+          console.warn('Perplexity: Clipboard unavailable or empty, falling back to DOM extraction.');
+          break;
         }
       }
     }
@@ -209,6 +212,19 @@ function sendErrorToBackground(error) {
     type: 'CLIP_ERROR',
     error: error
   });
+}
+
+async function tryReadClipboard() {
+  if (!navigator.clipboard?.readText) {
+    return '';
+  }
+
+  try {
+    return await navigator.clipboard.readText();
+  } catch (e) {
+    console.warn('Perplexity: Could not read clipboard:', e);
+    return '';
+  }
 }
 
 function sleep(ms) {
