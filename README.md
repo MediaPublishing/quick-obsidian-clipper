@@ -214,6 +214,11 @@ cd quick-obsidian-clipper
 
 ## Changelog
 
+### v2.4.4 (2026-01-14)
+- Fixed Twitter clipping output (single frontmatter, normalized handles, richer fields)
+- Added login-gate detection to avoid empty tweet clips
+- Added filename prefixes with per-domain rules (x/yt/gh/etc.)
+
 ### v2.4.3 (2026-01-14)
 - Added Perplexity fallback timer and safer clipboard handling
 - Fixed Twitter extraction validation and K/M metric parsing

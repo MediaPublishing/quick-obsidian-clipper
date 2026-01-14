@@ -533,9 +533,41 @@
           </div>
         </div>
 
+        <div class="data-row">
+          <div class="data-label">Filename Prefixes</div>
+          <div>
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+              <input type="checkbox" id="enable-domain-prefixes" style="width: 20px; height: 20px; cursor: pointer;">
+              <span style="font-weight: 500;">Add domain prefixes to filenames (e.g., x, yt, gh)</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="data-row" id="prefix-rules-section" style="display: none;">
+          <div class="data-label">Prefix Rules</div>
+          <div style="width: 100%;">
+            <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+              <input type="text" id="new-prefix-domain" placeholder="Domain (e.g., youtube.com)"
+                     style="flex: 1; padding: 10px 14px; border: 2px solid var(--border); border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 13px;">
+              <input type="text" id="new-prefix-value" placeholder="Prefix (e.g., yt)"
+                     style="width: 140px; padding: 10px 14px; border: 2px solid var(--border); border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 13px;">
+              <button id="add-prefix-rule" class="button button-secondary" style="padding: 10px 16px; white-space: nowrap;">
+                <span>+ Add</span>
+              </button>
+            </div>
+            <div id="prefix-rules-list" style="max-height: 200px; overflow-y: auto; border: 2px solid var(--border); border-radius: 8px; padding: 8px;">
+              <!-- Rules will be populated by JavaScript -->
+            </div>
+            <div style="margin-top: 8px; font-size: 12px; color: var(--gray-500);">
+              <span id="prefix-rules-count">0</span> rules configured
+            </div>
+          </div>
+        </div>
+
         <div class="help-text">
           <strong>Archive Mode:</strong> Routes configured sites through archive.ph before clipping to bypass paywalls. Enable the toggle and manage your site list above.<br><br>
-          <strong>Medium Bypass:</strong> Routes Medium articles through archive.ph to access full content.
+          <strong>Medium Bypass:</strong> Routes Medium articles through archive.ph to access full content.<br><br>
+          <strong>Filename Prefixes:</strong> Adds short prefixes (x/yt/gh) after the date for faster scanning.
         </div>
       </div>
 
@@ -633,7 +665,7 @@
 
     <footer>
       <div>Quick Obsidian Clipper</div>
-      <div class="version">v2.4.0 — Clipped Badge & Custom Download Path</div>
+      <div class="version">v2.4.4 — Tweet Cleanup & Filename Prefixes</div>
     </footer>
   </div>
 

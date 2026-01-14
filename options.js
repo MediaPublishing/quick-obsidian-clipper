@@ -389,6 +389,12 @@ function loadPhase2Settings() {
     // Update Medium bypass toggle
     const mediumCheckbox = $('enable-medium-bypass');
     if (mediumCheckbox) mediumCheckbox.checked = settings.bypassMedium || false;
+
+    // Update domain prefix toggle
+    const prefixCheckbox = $('enable-domain-prefixes');
+    if (prefixCheckbox) {
+      prefixCheckbox.checked = settings.useDomainPrefixes !== false;
+    }
   });
 }
 
@@ -434,6 +440,24 @@ if (mediumBypassEl) {
   });
 }
 
+// Domain prefix toggle handler
+const domainPrefixesEl = $('enable-domain-prefixes');
+if (domainPrefixesEl) {
+  domainPrefixesEl.addEventListener('change', (e) => {
+    chrome.storage.local.get(['settings'], (result) => {
+      const settings = result.settings || {};
+      settings.useDomainPrefixes = e.target.checked;
+      chrome.storage.local.set({ settings }, () => {
+        console.log('Domain prefixes:', e.target.checked);
+        const prefixSection = $('prefix-rules-section');
+        if (prefixSection) {
+          prefixSection.style.display = e.target.checked ? 'flex' : 'none';
+        }
+      });
+    });
+  });
+}
+
 // Initial load of Phase 2 settings
 loadPhase2Settings();
 
@@ -462,6 +486,21 @@ const DEFAULT_ARCHIVE_SITES = [
   'hbr.org',
   'foreignpolicy.com',
   'foreignaffairs.com'
+];
+
+const DEFAULT_PREFIX_RULES = [
+  { domain: 'x.com', prefix: 'x' },
+  { domain: 'twitter.com', prefix: 'x' },
+  { domain: 'youtube.com', prefix: 'yt' },
+  { domain: 'youtu.be', prefix: 'yt' },
+  { domain: 'github.com', prefix: 'gh' },
+  { domain: 'wsj.com', prefix: 'wsj' },
+  { domain: 'nytimes.com', prefix: 'nyt' },
+  { domain: 'substack.com', prefix: 'sub' },
+  { domain: 'movieinsider.com', prefix: 'mi' },
+  { domain: 'reddit.com', prefix: 'rd' },
+  { domain: 'techcrunch.com', prefix: 'tc' },
+  { domain: 'venturebeat.com', prefix: 'vb' }
 ];
 
 // Load and display archive sites
@@ -630,6 +669,202 @@ if (archiveModeElForSites) {
 
 // Initial load of archive sites
 loadArchiveSites();
+
+// ===== FILENAME PREFIX RULES =====
+
+function loadPrefixRules() {
+  chrome.storage.local.get(['settings'], (result) => {
+    const settings = result.settings || {};
+    const rules = settings.domainPrefixRules || [...DEFAULT_PREFIX_RULES];
+
+    renderPrefixRulesList(rules);
+    updatePrefixRulesCount(rules.length);
+
+    const prefixSection = $('prefix-rules-section');
+    if (prefixSection) {
+      const enabled = settings.useDomainPrefixes !== false;
+      prefixSection.style.display = enabled ? 'flex' : 'none';
+    }
+  });
+}
+
+function renderPrefixRulesList(rules) {
+  const listContainer = $('prefix-rules-list');
+  if (!listContainer) return;
+
+  listContainer.innerHTML = '';
+
+  if (!rules.length) {
+    const empty = document.createElement('div');
+    empty.style.color = 'var(--gray-500)';
+    empty.style.fontSize = '13px';
+    empty.style.padding = '12px';
+    empty.style.textAlign = 'center';
+    empty.textContent = 'No rules configured. Add rules above.';
+    listContainer.appendChild(empty);
+    return;
+  }
+
+  rules.forEach(rule => {
+    const item = document.createElement('div');
+    item.className = 'prefix-rule-item';
+    item.dataset.domain = rule.domain;
+    item.dataset.prefix = rule.prefix;
+    item.style.display = 'flex';
+    item.style.justifyContent = 'space-between';
+    item.style.alignItems = 'center';
+    item.style.padding = '8px 12px';
+    item.style.background = 'var(--gray-50)';
+    item.style.borderRadius = '6px';
+    item.style.marginBottom = '6px';
+    item.style.fontSize = '13px';
+
+    const label = document.createElement('span');
+    label.style.color = 'var(--gray-700)';
+    label.textContent = `${rule.domain} → ${rule.prefix}`;
+
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'remove-prefix-btn';
+    removeBtn.dataset.domain = rule.domain;
+    removeBtn.style.background = 'none';
+    removeBtn.style.border = 'none';
+    removeBtn.style.color = 'var(--gray-400)';
+    removeBtn.style.cursor = 'pointer';
+    removeBtn.style.padding = '4px 8px';
+    removeBtn.style.fontSize = '16px';
+    removeBtn.style.lineHeight = '1';
+    removeBtn.style.borderRadius = '4px';
+    removeBtn.textContent = '×';
+    removeBtn.title = 'Remove rule';
+
+    removeBtn.addEventListener('mouseenter', () => {
+      removeBtn.style.color = 'var(--error)';
+      removeBtn.style.background = 'rgba(255, 51, 102, 0.08)';
+    });
+
+    removeBtn.addEventListener('mouseleave', () => {
+      removeBtn.style.color = 'var(--gray-400)';
+      removeBtn.style.background = 'none';
+    });
+
+    removeBtn.addEventListener('click', () => {
+      removePrefixRule(rule.domain);
+    });
+
+    item.appendChild(label);
+    item.appendChild(removeBtn);
+    listContainer.appendChild(item);
+  });
+}
+
+function updatePrefixRulesCount(count) {
+  const countEl = $('prefix-rules-count');
+  if (countEl) countEl.textContent = count;
+}
+
+function normalizePrefixDomain(domain) {
+  if (!domain) {
+    return '';
+  }
+  let value = domain.trim().toLowerCase();
+  value = value.replace(/^https?:\/\//, '');
+  value = value.replace(/^www\./, '');
+  value = value.split('/')[0];
+  return value;
+}
+
+function normalizePrefixValue(prefix) {
+  if (!prefix) {
+    return '';
+  }
+  return prefix.trim().toLowerCase().replace(/[^a-z0-9]+/g, '');
+}
+
+function addPrefixRule(domain, prefix) {
+  const cleanDomain = normalizePrefixDomain(domain);
+  const cleanPrefix = normalizePrefixValue(prefix);
+
+  if (!cleanDomain || !cleanDomain.includes('.')) {
+    alert('Please enter a valid domain (e.g., youtube.com)');
+    return;
+  }
+
+  if (!cleanPrefix) {
+    alert('Please enter a short prefix (letters/numbers).');
+    return;
+  }
+
+  chrome.storage.local.get(['settings'], (result) => {
+    const settings = result.settings || {};
+    const rules = settings.domainPrefixRules || [...DEFAULT_PREFIX_RULES];
+
+    if (rules.some(rule => rule.domain === cleanDomain)) {
+      alert('That domain already has a prefix.');
+      return;
+    }
+
+    rules.push({ domain: cleanDomain, prefix: cleanPrefix });
+    rules.sort((a, b) => a.domain.localeCompare(b.domain));
+
+    settings.domainPrefixRules = rules;
+    chrome.storage.local.set({ settings }, () => {
+      loadPrefixRules();
+      const domainInput = $('new-prefix-domain');
+      const prefixInput = $('new-prefix-value');
+      if (domainInput) domainInput.value = '';
+      if (prefixInput) prefixInput.value = '';
+    });
+  });
+}
+
+function removePrefixRule(domain) {
+  chrome.storage.local.get(['settings'], (result) => {
+    const settings = result.settings || {};
+    const rules = settings.domainPrefixRules || [...DEFAULT_PREFIX_RULES];
+
+    const nextRules = rules.filter(rule => rule.domain !== domain);
+    settings.domainPrefixRules = nextRules;
+
+    chrome.storage.local.set({ settings }, () => {
+      loadPrefixRules();
+    });
+  });
+}
+
+const addPrefixRuleBtn = $('add-prefix-rule');
+if (addPrefixRuleBtn) {
+  addPrefixRuleBtn.addEventListener('click', () => {
+    const domainInput = $('new-prefix-domain');
+    const prefixInput = $('new-prefix-value');
+    if (domainInput && prefixInput) {
+      addPrefixRule(domainInput.value, prefixInput.value);
+    }
+  });
+}
+
+const prefixDomainInput = $('new-prefix-domain');
+if (prefixDomainInput) {
+  prefixDomainInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const prefixInput = $('new-prefix-value');
+      addPrefixRule(e.target.value, prefixInput?.value || '');
+    }
+  });
+}
+
+const prefixValueInput = $('new-prefix-value');
+if (prefixValueInput) {
+  prefixValueInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const domainInput = $('new-prefix-domain');
+      addPrefixRule(domainInput?.value || '', e.target.value);
+    }
+  });
+}
+
+loadPrefixRules();
 
 // ===== BULK CLIP ALL TABS =====
 

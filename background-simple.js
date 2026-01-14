@@ -26,6 +26,21 @@ const DEFAULT_SETTINGS = {
   notifications: true,
   trackHistory: true,
   showClippedBadge: true,  // Show indicator when page has been clipped
+  useDomainPrefixes: true,  // Add domain prefixes to filenames
+  domainPrefixRules: [
+    { domain: 'x.com', prefix: 'x' },
+    { domain: 'twitter.com', prefix: 'x' },
+    { domain: 'youtube.com', prefix: 'yt' },
+    { domain: 'youtu.be', prefix: 'yt' },
+    { domain: 'github.com', prefix: 'gh' },
+    { domain: 'wsj.com', prefix: 'wsj' },
+    { domain: 'nytimes.com', prefix: 'nyt' },
+    { domain: 'substack.com', prefix: 'sub' },
+    { domain: 'movieinsider.com', prefix: 'mi' },
+    { domain: 'reddit.com', prefix: 'rd' },
+    { domain: 'techcrunch.com', prefix: 'tc' },
+    { domain: 'venturebeat.com', prefix: 'vb' }
+  ],
   autoArchive: false,  // User enables and manages site list
   bypassMedium: false,  // User enables manually
   archiveSites: [       // User-editable list of sites to route through archive.ph
@@ -297,15 +312,20 @@ async function handleContentExtracted(data, tab) {
 
     // Clean up YouTube content if applicable
     const cleanedData = cleanYouTubeContent(data);
+    const normalizedData = normalizeContent(cleanedData);
+
+    if (isLikelyTwitterLoginGate(normalizedData)) {
+      throw new Error('Twitter/X login required. Please log in and try again.');
+    }
 
     // Create markdown content
-    const markdown = createMarkdown(cleanedData);
-
-    // Create filename
-    const filename = createFilename(data.title);
+    const markdown = createMarkdown(normalizedData);
 
     // Get settings
     const settings = await getSettings();
+
+    // Create filename
+    const filename = createFilename(normalizedData, settings);
 
     // Download file
     const downloadId = await downloadFile(markdown, filename, settings.saveLocation);
@@ -403,8 +423,106 @@ function cleanYouTubeContent(data) {
   return { ...data, content };
 }
 
+function normalizeContent(data) {
+  if (!data || typeof data !== 'object') {
+    return data;
+  }
+
+  const normalized = { ...data };
+
+  if (normalized.url && isTwitterSite(normalized.url) && typeof normalized.content === 'string') {
+    normalized.content = stripNestedFrontmatter(normalized.content);
+    normalized.url = normalizeTwitterUrl(normalized.url);
+  }
+
+  if (typeof normalized.content === 'string' && normalized.title) {
+    normalized.content = stripDuplicateTitle(normalized.content, normalized.title);
+  }
+
+  if (normalized.authorHandle) {
+    normalized.authorHandle = normalizeHandle(normalized.authorHandle);
+  } else if (normalized.author_handle) {
+    normalized.authorHandle = normalizeHandle(normalized.author_handle);
+  }
+
+  return normalized;
+}
+
+function stripDuplicateTitle(content, title) {
+  const trimmed = content.trimStart();
+  const header = `# ${title}`;
+  if (trimmed.startsWith(header)) {
+    return trimmed.slice(header.length).trimStart();
+  }
+  return content;
+}
+
+function stripNestedFrontmatter(content) {
+  if (!content || typeof content !== 'string') {
+    return content;
+  }
+
+  if (!content.startsWith('---\n')) {
+    return content;
+  }
+
+  const endIndex = content.indexOf('\n---', 4);
+  if (endIndex === -1) {
+    return content;
+  }
+
+  const after = content.slice(endIndex + 4);
+  return after.trimStart();
+}
+
+function normalizeTwitterUrl(url) {
+  if (!url) return url;
+
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname === 'twitter.com' || parsed.hostname.endsWith('.twitter.com')) {
+      parsed.hostname = 'x.com';
+    }
+    return parsed.toString();
+  } catch (error) {
+    return url;
+  }
+}
+
+function isLikelyTwitterLoginGate(data) {
+  if (!data?.url || !isTwitterSite(data.url) || data.type === 'tweet') {
+    return false;
+  }
+
+  const content = (data.content || '').toLowerCase();
+  const stats = calculateReadingStats(content);
+
+  const hasGateText =
+    content.includes('terms of service') &&
+    content.includes('privacy policy') &&
+    content.includes('cookie policy');
+
+  if (hasGateText && stats.wordCount < 50) {
+    return true;
+  }
+
+  if ((data.title || '').toLowerCase() === 'untitled' && stats.wordCount < 30) {
+    return true;
+  }
+
+  if (content.includes('x corp') && stats.wordCount < 50) {
+    return true;
+  }
+
+  return false;
+}
+
 // Create markdown content
 function createMarkdown(data) {
+  if (data.type === 'tweet') {
+    return createTweetMarkdown(data);
+  }
+
   const date = new Date().toISOString().split('T')[0];
   const now = new Date().toLocaleString();
 
@@ -412,14 +530,16 @@ function createMarkdown(data) {
   const stats = calculateReadingStats(data.content);
 
   // Determine content type
-  const contentType = data.selectionOnly ? 'selection' :
+  const contentType = data.type || (data.selectionOnly ? 'selection' :
                       data.imageOnly ? 'image' :
-                      data.url.includes('youtube.com') ? 'video' :
-                      'article';
+                      isYouTubeSite(data.url || '') ? 'video' :
+                      'article');
+
+  const source = data.source || 'web-clip';
 
   const frontmatter = `---
 title: "${escapeQuotes(data.title)}"
-source: web-clip
+source: ${source}
 url: "${data.url}"
 date_saved: ${date}
 date_published: ${data.published || ''}
@@ -453,6 +573,90 @@ ${data.content}
   return frontmatter + body;
 }
 
+function createTweetMarkdown(data) {
+  const dateSaved = new Date().toISOString().split('T')[0];
+  const authorName = Array.isArray(data.author) ? data.author[0] : data.author;
+  const author = authorName || 'Unknown';
+  const handle = normalizeHandle(data.authorHandle || data.author_handle);
+  const tweetId = data.tweetId || extractTweetIdFromUrl(data.url);
+  const url = normalizeTwitterUrl(data.url);
+  const published = data.published || '';
+  const datePublished = published ? published.split('T')[0] : '';
+  const likes = Number.isFinite(data.likes) ? data.likes : 0;
+  const retweets = Number.isFinite(data.retweets) ? data.retweets : 0;
+  const repliesCount = Number.isFinite(data.repliesCount)
+    ? data.repliesCount
+    : (typeof data.replies === 'number' ? data.replies : 0);
+  const mediaUrls = data.mediaUrls || data.media_urls || [];
+  const replies = Array.isArray(data.replies) ? data.replies : [];
+
+  const lines = [
+    '---',
+    `title: "Tweet by ${escapeQuotes(author)}"`,
+    'source: twitter',
+    `url: "${url}"`,
+    `author: "${escapeQuotes(author)}"`,
+    `author_handle: "${escapeQuotes(handle)}"`,
+    `date_saved: ${dateSaved}`,
+    `date_published: ${datePublished}`,
+    'type: tweet',
+    `tweet_id: "${tweetId || ''}"`,
+    `likes: ${likes}`,
+    `retweets: ${retweets}`,
+    `replies: ${repliesCount}`,
+    'tags:',
+    '  - clipping/twitter',
+    '  - social-media',
+    'related:',
+    `  - "[[${escapeQuotes(author)}]]"`,
+    '---',
+    '',
+    `# Tweet by ${author}`,
+    '',
+    `**Author:** [[${author}]] (${handle})`,
+    published ? `**Published:** ${new Date(published).toLocaleString()}` : '**Published:**',
+    `**URL:** ${url}`,
+    '',
+    '## Tweet',
+    '',
+    data.content ? `> ${data.content.split('\n').join('\n> ')}` : '> (No tweet text captured)',
+    '',
+    '**Engagement:**',
+    `- 💬 ${Number(repliesCount).toLocaleString()} replies`,
+    `- 🔁 ${Number(retweets).toLocaleString()} reposts`,
+    `- ❤️ ${Number(likes).toLocaleString()} likes`,
+    ''
+  ];
+
+  if (mediaUrls.length > 0) {
+    lines.push('## Media', '');
+    mediaUrls.forEach((mediaUrl, index) => {
+      lines.push(`![Image ${index + 1}](${mediaUrl})`, '');
+    });
+  }
+
+  if (replies.length > 0) {
+    lines.push('## Top Replies', '');
+    replies.forEach((reply, index) => {
+      const replyHandle = normalizeHandle(reply.authorHandle || reply.author_handle);
+      lines.push(
+        `### ${index + 1}. ${reply.author} (${replyHandle})`,
+        '',
+        reply.content ? `> ${reply.content.split('\n').join('\n> ')}` : '> (No reply text captured)',
+        '',
+        `**Engagement:** ${Number(reply.likes || 0).toLocaleString()} likes, ${Number(reply.retweets || 0).toLocaleString()} reposts`,
+        '',
+        '---',
+        ''
+      );
+    });
+  }
+
+  lines.push('## Notes', '', '<!-- Add your thoughts here -->', '');
+
+  return lines.join('\n');
+}
+
 // Calculate word count and reading time
 function calculateReadingStats(content) {
   if (!content || typeof content !== 'string') {
@@ -479,18 +683,188 @@ function calculateReadingStats(content) {
   };
 }
 
-// Create filename from title
-function createFilename(title) {
-  const date = new Date().toISOString().split('T')[0];
+function getFilenamePrefix(data, settings) {
+  if (!settings?.useDomainPrefixes) {
+    return '';
+  }
 
-  // Sanitize title for filename
-  const slug = title
+  const rules = settings.domainPrefixRules || DEFAULT_SETTINGS.domainPrefixRules || [];
+  const domain = getDomainFromUrl(data?.url);
+  if (domain) {
+    for (const rule of rules) {
+      if (!rule?.domain || !rule?.prefix) {
+        continue;
+      }
+      const ruleDomain = rule.domain.toLowerCase();
+      if (domain === ruleDomain || domain.endsWith(`.${ruleDomain}`)) {
+        return normalizePrefix(rule.prefix);
+      }
+    }
+  }
+
+  if (data?.type === 'tweet') {
+    return 'x';
+  }
+
+  if (isYouTubeSite(data?.url || '')) {
+    return 'yt';
+  }
+
+  if (isGitHubRepoUrl(data?.url || '')) {
+    return 'gh';
+  }
+
+  return '';
+}
+
+function buildFilenameSlug(data) {
+  if (data?.type === 'tweet') {
+    return truncateSlug(buildTweetSlug(data), 60);
+  }
+
+  if (isGitHubRepoUrl(data?.url || '')) {
+    const repoSlug = extractGitHubSlug(data.url);
+    if (repoSlug) {
+      return truncateSlug(repoSlug, 60);
+    }
+  }
+
+  if (isYouTubeSite(data?.url || '')) {
+    const titleSlug = slugify(data?.title || '');
+    const videoId = extractYouTubeId(data?.url || '');
+    if (videoId && titleSlug) {
+      return truncateSlug(`${titleSlug}-${videoId}`, 60);
+    }
+    if (titleSlug) {
+      return truncateSlug(titleSlug, 60);
+    }
+  }
+
+  return truncateSlug(slugify(data?.title || ''), 60);
+}
+
+function buildTweetSlug(data) {
+  const handle = normalizeHandleForSlug(data?.authorHandle || data?.author_handle || (Array.isArray(data?.author) ? data.author[0] : data?.author));
+  const tweetId = data?.tweetId || extractTweetIdFromUrl(data?.url || '');
+
+  if (handle && tweetId) {
+    return `${handle}-${tweetId}`;
+  }
+
+  if (handle) {
+    return handle;
+  }
+
+  const snippet = extractContentSnippet(data?.content || '');
+  return snippet || 'tweet';
+}
+
+function extractContentSnippet(content, maxWords = 8) {
+  if (!content) {
+    return '';
+  }
+  const words = content.replace(/\s+/g, ' ').trim().split(' ').slice(0, maxWords);
+  return slugify(words.join(' '));
+}
+
+function extractTweetIdFromUrl(url) {
+  if (!url) return '';
+  const match = url.match(/\/status\/(\\d+)/);
+  return match ? match[1] : '';
+}
+
+function extractYouTubeId(url) {
+  if (!url) return '';
+  const match = url.match(/[?&]v=([^&]+)/) || url.match(/youtu\\.be\\/([^?]+)/) || url.match(/\\/shorts\\/([^?]+)/);
+  return match ? match[1] : '';
+}
+
+function isGitHubRepoUrl(url) {
+  if (!url) return false;
+  try {
+    const parsed = new URL(url);
+    if (!parsed.hostname.includes('github.com')) {
+      return false;
+    }
+    const parts = parsed.pathname.split('/').filter(Boolean);
+    return parts.length >= 2;
+  } catch (error) {
+    return false;
+  }
+}
+
+function extractGitHubSlug(url) {
+  try {
+    const parsed = new URL(url);
+    const parts = parsed.pathname.split('/').filter(Boolean);
+    if (parts.length >= 2) {
+      return `${parts[0]}-${parts[1]}`.toLowerCase();
+    }
+  } catch (error) {
+    return '';
+  }
+  return '';
+}
+
+function getDomainFromUrl(url) {
+  if (!url) return '';
+  try {
+    const parsed = new URL(url);
+    return parsed.hostname.toLowerCase().replace(/^www\\./, '');
+  } catch (error) {
+    return '';
+  }
+}
+
+function normalizePrefix(prefix) {
+  return String(prefix || '')
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')  // Replace non-alphanumeric with dash
-    .replace(/^-|-$/g, '')         // Remove leading/trailing dashes
-    .substring(0, 50);              // Limit length
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+}
 
-  return `${date}--${slug}.md`;
+function normalizeHandle(handle) {
+  if (!handle) {
+    return '@unknown';
+  }
+  const trimmed = String(handle).trim();
+  if (!trimmed) {
+    return '@unknown';
+  }
+  return trimmed.startsWith('@') ? trimmed : `@${trimmed}`;
+}
+
+function normalizeHandleForSlug(handle) {
+  if (!handle) {
+    return '';
+  }
+  return String(handle).replace('@', '').trim().toLowerCase();
+}
+
+function slugify(text) {
+  return String(text || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+function truncateSlug(slug, maxLength) {
+  const safe = slug || '';
+  if (safe.length <= maxLength) {
+    return safe;
+  }
+  return safe.substring(0, maxLength).replace(/-+$/g, '');
+}
+
+// Create filename from content and domain rules
+function createFilename(data, settings) {
+  const date = new Date().toISOString().split('T')[0];
+  const prefix = getFilenamePrefix(data, settings);
+  const slug = buildFilenameSlug(data);
+  const prefixPart = prefix ? `${prefix}-` : '';
+  const safeSlug = slug || 'untitled';
+
+  return `${date}--${prefixPart}${safeSlug}.md`;
 }
 
 // Download file using Chrome downloads API

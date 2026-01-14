@@ -28,16 +28,25 @@ class TwitterHandler {
     // Get replies if on a tweet detail page
     const replies = this.extractReplies();
 
-    // Format as markdown
-    const markdown = this.formatTweetMarkdown(tweet, replies);
-
     return {
       title: `Tweet by ${tweet.author}`,
-      url: window.location.href,
-      content: markdown,
+      url: this.normalizeTweetUrl(tweet.url || window.location.href),
+      content: tweet.content || '',
       timestamp: new Date().toISOString(),
       author: tweet.author ? [tweet.author] : undefined,
-      published: tweet.timestamp
+      authorHandle: this.normalizeHandle(tweet.authorHandle),
+      published: tweet.timestamp,
+      type: 'tweet',
+      source: 'twitter',
+      tweetId: tweet.id || '',
+      likes: tweet.likes || 0,
+      retweets: tweet.retweets || 0,
+      repliesCount: tweet.replies || 0,
+      mediaUrls: tweet.mediaUrls || [],
+      replies: replies.map(reply => ({
+        ...reply,
+        authorHandle: this.normalizeHandle(reply.authorHandle)
+      }))
     };
   }
 
@@ -203,8 +212,11 @@ class TwitterHandler {
         }
         // Check href for username
         const href = link.getAttribute('href');
-        if (href && href.match(/^\/[a-zA-Z0-9_]+$/)) {
-          return '@' + href.slice(1);
+        if (href) {
+          const match = href.match(/^\/([a-zA-Z0-9_]+)(?:\/|$)/);
+          if (match) {
+            return '@' + match[1];
+          }
         }
       }
     }
@@ -341,6 +353,32 @@ class TwitterHandler {
     return mediaUrls;
   }
 
+  normalizeHandle(handle) {
+    if (!handle) {
+      return '@unknown';
+    }
+    const trimmed = String(handle).trim();
+    if (!trimmed) {
+      return '@unknown';
+    }
+    return trimmed.startsWith('@') ? trimmed : `@${trimmed}`;
+  }
+
+  normalizeTweetUrl(url) {
+    if (!url) {
+      return url;
+    }
+    try {
+      const parsed = new URL(url);
+      if (parsed.hostname === 'twitter.com' || parsed.hostname.endsWith('.twitter.com')) {
+        parsed.hostname = 'x.com';
+      }
+      return parsed.toString();
+    } catch (e) {
+      return url;
+    }
+  }
+
   extractReplies() {
     const replies = [];
     const tweetArticles = document.querySelectorAll('article[data-testid="tweet"], article[role="article"]');
@@ -354,74 +392,6 @@ class TwitterHandler {
     }
 
     return replies;
-  }
-
-  formatTweetMarkdown(tweet, replies = []) {
-    const dateSaved = new Date().toISOString().split('T')[0];
-    const datePublished = tweet.timestamp ? tweet.timestamp.split('T')[0] : dateSaved;
-
-    const lines = [
-      '---',
-      `title: "Tweet by ${tweet.author}"`,
-      'source: twitter',
-      `url: "${tweet.url}"`,
-      `author: "${tweet.author}"`,
-      `author_handle: "${tweet.authorHandle}"`,
-      `date_saved: ${dateSaved}`,
-      `date_published: ${datePublished}`,
-      'type: tweet',
-      'tags:',
-      '  - clipping/twitter',
-      '  - social-media',
-      'related:',
-      `  - "[[${tweet.author}]]"`,
-      '---',
-      '',
-      `# Tweet by ${tweet.author}`,
-      '',
-      `**Author:** [[${tweet.author}]] (${tweet.authorHandle})`,
-      `**Published:** ${new Date(tweet.timestamp).toLocaleString()}`,
-      `**URL:** ${tweet.url}`,
-      '',
-      '## Tweet Content',
-      '',
-      `> ${tweet.content.split('\n').join('\n> ')}`,
-      '',
-      '**Engagement:**',
-      `- 💬 ${tweet.replies.toLocaleString()} replies`,
-      `- 🔁 ${tweet.retweets.toLocaleString()} reposts`,
-      `- ❤️ ${tweet.likes.toLocaleString()} likes`,
-      ''
-    ];
-
-    // Add media if present
-    if (tweet.mediaUrls && tweet.mediaUrls.length > 0) {
-      lines.push('## Media', '');
-      tweet.mediaUrls.forEach((url, i) => {
-        lines.push(`![Image ${i + 1}](${url})`, '');
-      });
-    }
-
-    // Add replies if present
-    if (replies.length > 0) {
-      lines.push('## Top Replies', '');
-      replies.forEach((reply, i) => {
-        lines.push(
-          `### ${i + 1}. ${reply.author} (${reply.authorHandle})`,
-          '',
-          `> ${reply.content.split('\n').join('\n> ')}`,
-          '',
-          `**Engagement:** ${reply.likes} likes, ${reply.retweets} reposts`,
-          '',
-          '---',
-          ''
-        );
-      });
-    }
-
-    lines.push('## Notes', '', '<!-- Add your thoughts here -->', '');
-
-    return lines.join('\n');
   }
 
   sleep(ms) {
