@@ -214,6 +214,10 @@ cd quick-obsidian-clipper
 
 ## Changelog
 
+### v2.4.2 (2026-01-14)
+- Added DOMPurify fallback when sanitization fails, returning clean text content
+- Removed stray `text` SVG nodes to avoid transform parsing errors on sites like neon.com
+
 ### v2.4.1 (2026-02-01)
 - Hardened handler injection with fallback paths (YouTube, Perplexity, Twitter bookmarks)
 - Ensured general extraction still runs if a handler script is missing
