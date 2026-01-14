@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clipping History — Quick Obsidian Clipper</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --black: #000000;
+      --white: #ffffff;
+      --gray-100: #f5f5f5;
+      --gray-200: #e5e5e5;
+      --gray-300: #d4d4d4;
+      --gray-400: #a3a3a3;
+      --gray-500: #737373;
+      --gray-600: #525252;
+      --gray-700: #404040;
+      --gray-800: #262626;
+      --gray-900: #171717;
+      --accent: #FF6B00;
+      --accent-dark: #E05F00;
+      --success: #00FF87;
+      --success-dark: #00CC6A;
+      --error: #FF3366;
+      --error-dark: #E02D5A;
+      --code-bg: #F9FAFB;
+      --border: #E5E7EB;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--white);
+      color: var(--black);
+      line-height: 1.6;
+      padding: 0;
+      margin: 0;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 60px 40px;
+    }
+
+    /* Header */
+    header {
+      margin-bottom: 60px;
+      border-bottom: 3px solid var(--black);
+      padding-bottom: 40px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .logo-icon {
+      width: 48px;
+      height: 48px;
+      background: var(--black);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      transition: transform 0.3s ease;
+    }
+
+    .logo-icon:hover {
+      transform: rotate(-5deg) scale(1.05);
+    }
+
+    h1 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 48px;
+      letter-spacing: -0.03em;
+      line-height: 1;
+      margin: 0;
+    }
+
+    .subtitle {
+      font-size: 16px;
+      color: var(--gray-500);
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      margin-top: 8px;
+    }
+
+    /* Stats Grid */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+      margin-top: 32px;
+    }
+
+    @media (max-width: 768px) {
+      .stats {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .stat {
+      text-align: center;
+      padding: 24px;
+      background: var(--gray-100);
+      border: 2px solid var(--black);
+      transition: all 0.2s ease;
+    }
+
+    .stat:hover {
+      box-shadow: 4px 4px 0 var(--black);
+      transform: translate(-2px, -2px);
+    }
+
+    .stat-value {
+      font-family: 'Syne', sans-serif;
+      font-size: 42px;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 8px;
+      color: var(--black);
+    }
+
+    .stat-label {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--gray-500);
+    }
+
+    /* Filters */
+    .filters {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 40px;
+      flex-wrap: wrap;
+    }
+
+    #search {
+      flex: 1;
+      min-width: 200px;
+      padding: 14px 18px;
+      border: 2px solid var(--black);
+      font-family: 'IBM Plex Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+
+    #search:focus {
+      outline: none;
+      box-shadow: 4px 4px 0 var(--black);
+      transform: translate(-2px, -2px);
+    }
+
+    select {
+      padding: 14px 18px;
+      border: 2px solid var(--black);
+      background: var(--white);
+      font-family: 'IBM Plex Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    select:hover {
+      background: var(--gray-100);
+    }
+
+    .btn {
+      padding: 14px 24px;
+      font-family: 'IBM Plex Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border: 2px solid var(--black);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+      overflow: hidden;
+      background: var(--white);
+    }
+
+    .btn:hover {
+      background: var(--black);
+      color: var(--white);
+    }
+
+    .btn:active {
+      transform: translate(2px, 2px);
+    }
+
+    #export-history {
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    #export-history:hover {
+      background: var(--accent);
+      color: var(--white);
+    }
+
+    #clear-history {
+      color: var(--error);
+      border-color: var(--error);
+    }
+
+    #clear-history:hover {
+      background: var(--error);
+      color: var(--white);
+    }
+
+    /* History List */
+    .history-list {
+      min-height: 400px;
+    }
+
+    .clip-item {
+      padding: 24px;
+      margin-bottom: 20px;
+      border: 2px solid var(--black);
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .clip-item:hover {
+      box-shadow: 6px 6px 0 var(--black);
+      transform: translate(-3px, -3px);
+    }
+
+    .clip-item.success {
+      border-left: 6px solid var(--success);
+    }
+
+    .clip-item.failed {
+      border-left: 6px solid var(--error);
+      background: #FFF5F7;
+    }
+
+    .clip-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      margin-bottom: 16px;
+      gap: 16px;
+    }
+
+    .clip-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--black);
+      flex: 1;
+      line-height: 1.3;
+      letter-spacing: -0.02em;
+    }
+
+    .clip-status {
+      padding: 6px 14px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border: 2px solid;
+      white-space: nowrap;
+    }
+
+    .status-success {
+      background: var(--success);
+      color: var(--black);
+      border-color: var(--black);
+    }
+
+    .status-failed {
+      background: var(--error);
+      color: var(--white);
+      border-color: var(--black);
+    }
+
+    .clip-meta {
+      display: flex;
+      gap: 24px;
+      margin-bottom: 16px;
+      font-size: 14px;
+      color: var(--gray-600);
+    }
+
+    .clip-url {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .clip-url a {
+      color: var(--accent);
+      text-decoration: none;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+    }
+
+    .clip-url a:hover {
+      text-decoration: underline;
+    }
+
+    .clip-time {
+      white-space: nowrap;
+      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+    }
+
+    .clip-error {
+      background: #FEE2E2;
+      border: 2px solid var(--error);
+      padding: 12px 16px;
+      color: #991B1B;
+      font-size: 13px;
+      margin-bottom: 16px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .clip-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .action-btn {
+      padding: 10px 16px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      border: 2px solid var(--black);
+      background: var(--white);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-family: 'IBM Plex Sans', sans-serif;
+    }
+
+    .action-btn:hover {
+      background: var(--black);
+      color: var(--white);
+      transform: translateY(-2px);
+    }
+
+    .action-btn.delete-btn:hover {
+      background: var(--error);
+      border-color: var(--error);
+    }
+
+    .action-btn.reclip-btn:hover {
+      background: var(--success);
+      border-color: var(--success);
+      color: var(--black);
+    }
+
+    .action-btn.open-url-btn:hover {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    /* Empty State */
+    .empty {
+      text-align: center;
+      padding: 100px 20px;
+      border: 3px dashed var(--gray-300);
+    }
+
+    .empty-icon {
+      font-size: 72px;
+      margin-bottom: 24px;
+    }
+
+    .empty-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--gray-600);
+      margin-bottom: 12px;
+    }
+
+    .empty-text {
+      font-size: 16px;
+      color: var(--gray-500);
+    }
+
+    /* Footer */
+    footer {
+      margin-top: 60px;
+      padding-top: 30px;
+      border-top: 2px solid var(--black);
+      text-align: center;
+      font-size: 13px;
+      color: var(--gray-500);
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">
+        <div class="logo-icon">📋</div>
+        <div>
+          <h1>Clipping History</h1>
+          <div class="subtitle">Your Web Clipping Archive</div>
+        </div>
+      </div>
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-value" id="total-clips">0</div>
+          <div class="stat-label">Total Clips</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value" id="today-clips">0</div>
+          <div class="stat-label">Today</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value" id="week-clips">0</div>
+          <div class="stat-label">This Week</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value" id="success-rate">0%</div>
+          <div class="stat-label">Success Rate</div>
+        </div>
+      </div>
+    </header>
+
+    <div class="filters">
+      <input type="search" id="search" placeholder="Search clips by title or URL...">
+      <select id="filter-status">
+        <option value="all">All Status</option>
+        <option value="success">Success Only</option>
+        <option value="failed">Failed Only</option>
+      </select>
+      <select id="filter-time">
+        <option value="all">All Time</option>
+        <option value="today">Today</option>
+        <option value="week">This Week</option>
+        <option value="month">This Month</option>
+      </select>
+      <button class="btn" id="export-history">Export CSV</button>
+      <button class="btn" id="clear-history">Clear History</button>
+    </div>
+
+    <div class="history-list" id="history-list">
+      <div class="empty">
+        <div class="empty-icon">📭</div>
+        <div class="empty-title">No clips yet</div>
+        <div class="empty-text">Start clipping web pages to see them here!</div>
+      </div>
+    </div>
+
+    <footer>
+      <div>Quick Obsidian Clipper — History</div>
+    </footer>
+  </div>
+
+  <script src="history.js"></script>
+</body>
+</html>

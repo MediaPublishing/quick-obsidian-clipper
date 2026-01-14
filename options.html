@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quick Obsidian Clipper - Settings</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Quick Obsidian Clipper</h1>
+      <p class="subtitle">Configure your Obsidian connection</p>
+    </header>
+
+    <main>
+      <form id="settings-form">
+
+        <div class="form-group">
+          <label for="clip-mode">
+            <strong>Step 1:</strong> Choose Clipping Mode
+          </label>
+          <select id="clip-mode">
+            <option value="filesystem">✅ Filesystem (works without Obsidian) - Recommended</option>
+            <option value="api">API Only (requires Obsidian running)</option>
+            <option value="auto">Auto (try Filesystem first, then API)</option>
+          </select>
+          <p class="help-text">
+            <strong>Recommended:</strong> Filesystem mode works even when Obsidian is closed!
+          </p>
+        </div>
+
+        <div class="form-group" id="filesystem-path-field">
+          <label for="filesystem-path">
+            <strong>Step 2:</strong> Set Save Path
+          </label>
+          <input
+            type="text"
+            id="filesystem-path"
+            placeholder="Obsidian/Clippings"
+            value="Obsidian/Clippings"
+          >
+          <p class="help-text">
+            Path relative to Downloads folder. Files will save to: <code>~/Downloads/Obsidian/Clippings/</code>
+          </p>
+          <div style="background: #f0f9ff; border-left: 4px solid #0ea5e9; padding: 12px; margin-top: 8px; border-radius: 4px;">
+            <strong>📋 Step 3: Run this command in Terminal to connect to your vault:</strong>
+            <pre style="background: #1e293b; color: #e2e8f0; padding: 12px; border-radius: 4px; overflow-x: auto; margin-top: 8px; font-size: 12px;">mkdir -p ~/Downloads/Obsidian/Clippings
+ln -s ~/Downloads/Obsidian/Clippings "/Users/MediaPublishing/My Drive (webonomy@gmail.com)/!Vault/Clippings/Browser-Clips"</pre>
+            <p style="margin: 8px 0 0 0; font-size: 13px; color: #64748b;">
+              <strong>Already done!</strong> Your symlink is set up. Clips will automatically appear in your vault.
+            </p>
+          </div>
+        </div>
+
+        <!-- API FIELDS (hidden in filesystem mode) -->
+        <div class="form-group api-field" style="display: none;">
+          <label for="api-url">
+            Local REST API URL
+          </label>
+          <input
+            type="text"
+            id="api-url"
+            placeholder="http://localhost:27123"
+            value="http://localhost:27123"
+          >
+          <p class="help-text">
+            Use <code>http://localhost:27123</code> (HTTP port)
+          </p>
+        </div>
+
+        <div class="form-group api-field" style="display: none;">
+          <label for="api-key">
+            API Key
+          </label>
+          <input
+            type="password"
+            id="api-key"
+            placeholder="Your API key from Obsidian"
+          >
+          <p class="help-text">
+            Find this in Obsidian: Settings → Community Plugins → Local REST API → Show API Key
+          </p>
+        </div>
+
+        <div class="form-group api-field" style="display: none;">
+          <label for="vault-name">
+            Vault Name
+          </label>
+          <input
+            type="text"
+            id="vault-name"
+            placeholder="MyVault"
+          >
+          <p class="help-text">
+            The exact name of your Obsidian vault
+          </p>
+        </div>
+
+        <div class="form-group api-field" style="display: none;">
+          <label for="folder-path">
+            Folder Path (API mode)
+          </label>
+          <input
+            type="text"
+            id="folder-path"
+            placeholder="Clippings"
+          >
+          <p class="help-text">
+            Folder where clips will be saved via API (leave empty for vault root)
+          </p>
+        </div>
+
+        <div class="form-group checkbox-group">
+          <label>
+            <input type="checkbox" id="enabled" checked>
+            Enable clipping
+          </label>
+        </div>
+
+
+        <div class="form-group checkbox-group">
+          <label>
+            <input type="checkbox" id="use-webhook">
+            Use webhook for automatic processing (YouTube skill integration)
+          </label>
+        </div>
+
+        <div class="form-group" id="webhook-field" style="display: none;">
+          <label for="webhook-url">
+            Webhook URL
+          </label>
+          <input
+            type="text"
+            id="webhook-url"
+            placeholder="http://localhost:3000/webhook"
+          >
+          <p class="help-text">
+            Webhook will receive clip data and can trigger the youtube-transcript skill
+          </p>
+        </div>
+
+        <div class="form-group">
+          <label for="default-tags">
+            Default Tags
+          </label>
+          <input
+            type="text"
+            id="default-tags"
+            placeholder="clippings, reading"
+          >
+          <p class="help-text">
+            Comma-separated tags to add to all clips (e.g., "clippings, reading")
+          </p>
+        </div>
+
+        <div class="form-group">
+          <label for="default-author">
+            Default Author
+          </label>
+          <input
+            type="text"
+            id="default-author"
+            placeholder="Your Name"
+          >
+          <p class="help-text">
+            Default author name (will be wiki-linked) if page doesn't specify an author
+          </p>
+        </div>
+
+        <div class="form-group checkbox-group">
+          <label>
+            <input type="checkbox" id="include-description" checked>
+            Include page description in frontmatter
+          </label>
+        </div>
+
+        <div class="form-group checkbox-group">
+          <label>
+            <input type="checkbox" id="include-publish-date" checked>
+            Include publish date in frontmatter
+          </label>
+        </div>
+
+        <div class="button-group">
+          <button type="submit" id="save-button" class="btn btn-primary">
+            Save Settings
+          </button>
+          <button type="button" id="test-button" class="btn btn-secondary">
+            Test Connection
+          </button>
+        </div>
+
+        <div id="status" class="status" style="display: none;"></div>
+      </form>
+
+      <section class="section">
+        <h2>Setup Instructions</h2>
+
+        <h3>🚀 Quick Setup (Filesystem Mode - Recommended)</h3>
+        <p><strong>This mode works WITHOUT Obsidian running!</strong></p>
+        <ol class="instructions">
+          <li>
+            <strong>Select Filesystem Mode:</strong>
+            <ul>
+              <li>Choose "Filesystem (works without Obsidian)" from the Clipping Mode dropdown above</li>
+            </ul>
+          </li>
+          <li>
+            <strong>Configure Save Path:</strong>
+            <ul>
+              <li>Enter a path like <code>Obsidian/Clippings</code> in Filesystem Save Path</li>
+              <li>Files will be saved to your Downloads folder (e.g., <code>~/Downloads/Obsidian/Clippings/</code>)</li>
+            </ul>
+          </li>
+          <li>
+            <strong>Connect to Obsidian Vault (Optional):</strong>
+            <ul>
+              <li><strong>Option A:</strong> Create a symlink from the download folder to your vault:
+                <br><code>ln -s ~/Downloads/Obsidian/Clippings ~/path/to/vault/Clippings</code></li>
+              <li><strong>Option B:</strong> If your vault is in Google Drive, configure the filesystem path to point to it directly</li>
+              <li><strong>Option C:</strong> Manually move clips from Downloads to your vault as needed</li>
+            </ul>
+          </li>
+          <li>
+            <strong>Start clipping:</strong>
+            <ul>
+              <li>Navigate to any webpage</li>
+              <li>Click the extension icon to clip</li>
+              <li>Files are saved immediately - no need for Obsidian to be running!</li>
+            </ul>
+          </li>
+        </ol>
+
+        <h3>🔌 API Mode Setup (Legacy - Requires Obsidian Running)</h3>
+        <ol class="instructions">
+          <li>
+            <strong>Install Local REST API Plugin in Obsidian:</strong>
+            <ul>
+              <li>Open Obsidian → Settings → Community Plugins</li>
+              <li>Search for "Local REST API"</li>
+              <li>Install and enable it</li>
+            </ul>
+          </li>
+          <li>
+            <strong>Get your API Key:</strong>
+            <ul>
+              <li>Settings → Community Plugins → Local REST API</li>
+              <li>Click "Show API Key" and copy it</li>
+            </ul>
+          </li>
+          <li>
+            <strong>Configure this extension:</strong>
+            <ul>
+              <li>Select "API Only" from Clipping Mode dropdown</li>
+              <li>Paste your API key</li>
+              <li>Enter your vault name</li>
+              <li>Click "Test Connection" to verify</li>
+              <li>Click "Save Settings"</li>
+            </ul>
+          </li>
+          <li>
+            <strong>Start clipping:</strong>
+            <ul>
+              <li>Navigate to any webpage</li>
+              <li>Click the extension icon to clip</li>
+              <li>⚠️ Obsidian must be running for clips to save</li>
+            </ul>
+          </li>
+        </ol>
+      </section>
+
+      <section class="section">
+        <h2>Advanced</h2>
+        <button type="button" id="clear-cache" class="btn btn-danger">
+          Clear Clipped URLs Cache
+        </button>
+        <p class="help-text">
+          This will reset the duplicate detection. Use this if you want to re-clip previously clipped pages.
+        </p>
+      </section>
+
+      <footer class="footer">
+        <p>
+          Quick Obsidian Clipper v1.0.0 |
+          <a href="https://github.com/coddingtonbear/obsidian-local-rest-api" target="_blank">
+            Local REST API Docs
+          </a>
+        </p>
+      </footer>
+    </main>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>

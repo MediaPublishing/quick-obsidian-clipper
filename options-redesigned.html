@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Obsidian Clipper — Settings</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --black: #000000;
+      --white: #ffffff;
+      --gray-100: #f5f5f5;
+      --gray-200: #e5e5e5;
+      --gray-300: #d4d4d4;
+      --gray-400: #a3a3a3;
+      --gray-500: #737373;
+      --gray-600: #525252;
+      --gray-700: #404040;
+      --gray-800: #262626;
+      --gray-900: #171717;
+      --accent: #FF6B00;
+      --accent-dark: #E05F00;
+      --success: #00FF87;
+      --error: #FF3366;
+      --code-bg: #F9FAFB;
+      --border: #E5E7EB;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--white);
+      color: var(--black);
+      line-height: 1.6;
+      padding: 0;
+      margin: 0;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 60px 40px;
+    }
+
+    /* Header */
+    header {
+      margin-bottom: 80px;
+      border-bottom: 3px solid var(--black);
+      padding-bottom: 40px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 12px;
+    }
+
+    .logo-icon {
+      width: 48px;
+      height: 48px;
+      background: var(--black);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      transition: transform 0.3s ease;
+    }
+
+    .logo-icon:hover {
+      transform: rotate(-5deg) scale(1.05);
+    }
+
+    h1 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 56px;
+      letter-spacing: -0.03em;
+      line-height: 1;
+      margin: 0;
+    }
+
+    .subtitle {
+      font-size: 18px;
+      color: var(--gray-500);
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      margin-top: 8px;
+    }
+
+    /* Grid Layout */
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      margin-bottom: 60px;
+    }
+
+    @media (max-width: 768px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Section */
+    .section {
+      background: var(--white);
+      border: 2px solid var(--black);
+      padding: 32px;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+
+    .section:hover {
+      box-shadow: 8px 8px 0 var(--black);
+      transform: translate(-2px, -2px);
+    }
+
+    .section-header {
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .section-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 28px;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Status LED */
+    .status-led {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      position: relative;
+      animation: pulse 2s infinite;
+    }
+
+    .status-led.active {
+      background: var(--success);
+      box-shadow: 0 0 0 4px rgba(0, 255, 135, 0.2);
+    }
+
+    .status-led.inactive {
+      background: var(--gray-300);
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.6;
+      }
+    }
+
+    /* Data Display */
+    .data-row {
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      gap: 20px;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .data-row:last-child {
+      border-bottom: none;
+    }
+
+    .data-label {
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--gray-500);
+    }
+
+    .data-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--black);
+      word-break: break-all;
+      background: var(--code-bg);
+      padding: 8px 12px;
+      border-radius: 4px;
+      border: 1px solid var(--gray-200);
+    }
+
+    /* Status Badge */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border: 2px solid;
+    }
+
+    .status-badge.detected {
+      background: var(--success);
+      color: var(--black);
+      border-color: var(--black);
+    }
+
+    .status-badge.unknown {
+      background: var(--gray-200);
+      color: var(--gray-600);
+      border-color: var(--gray-400);
+    }
+
+    /* Stats Display */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    .stat {
+      text-align: center;
+      padding: 20px;
+      background: var(--gray-100);
+      border: 1px solid var(--gray-200);
+      transition: all 0.2s ease;
+    }
+
+    .stat:hover {
+      background: var(--gray-200);
+      transform: translateY(-2px);
+    }
+
+    .stat-value {
+      font-family: 'Syne', sans-serif;
+      font-size: 48px;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 8px;
+      color: var(--black);
+    }
+
+    .stat-label {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--gray-500);
+    }
+
+    /* Buttons */
+    .actions {
+      display: flex;
+      gap: 16px;
+      margin-top: 40px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 18px 32px;
+      font-family: 'IBM Plex Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border: 2px solid var(--black);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn:before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: var(--black);
+      transition: left 0.3s ease;
+      z-index: 0;
+    }
+
+    .btn:hover:before {
+      left: 0;
+    }
+
+    .btn span {
+      position: relative;
+      z-index: 1;
+      transition: color 0.3s ease;
+    }
+
+    .btn:hover span {
+      color: var(--white);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: var(--black);
+      border-color: var(--black);
+    }
+
+    .btn-primary:before {
+      background: var(--black);
+    }
+
+    .btn-secondary {
+      background: var(--white);
+      color: var(--black);
+      border-color: var(--black);
+    }
+
+    .btn:active {
+      transform: translate(2px, 2px);
+    }
+
+    /* Help Text */
+    .help-text {
+      margin-top: 16px;
+      padding: 16px;
+      background: var(--gray-100);
+      border-left: 4px solid var(--accent);
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--gray-700);
+    }
+
+    /* Footer */
+    footer {
+      margin-top: 80px;
+      padding-top: 40px;
+      border-top: 2px solid var(--black);
+      text-align: center;
+      font-size: 13px;
+      color: var(--gray-500);
+      font-weight: 500;
+    }
+
+    .version {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--gray-400);
+      margin-top: 8px;
+    }
+
+    /* Loading Animation */
+    @keyframes shimmer {
+      0% {
+        background-position: -1000px 0;
+      }
+      100% {
+        background-position: 1000px 0;
+      }
+    }
+
+    .loading {
+      background: linear-gradient(90deg, var(--gray-200) 25%, var(--gray-300) 50%, var(--gray-200) 75%);
+      background-size: 1000px 100%;
+      animation: shimmer 2s infinite;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">
+        <div class="logo-icon">📎</div>
+        <div>
+          <h1>Quick Obsidian Clipper</h1>
+          <div class="subtitle">Settings & Configuration</div>
+        </div>
+      </div>
+    </header>
+
+    <div class="grid">
+      <!-- Download Location Section -->
+      <div class="section">
+        <div class="section-header">
+          <h2 class="section-title">
+            <span class="status-led" id="status-led"></span>
+            Download Location
+          </h2>
+        </div>
+
+        <div class="data-row">
+          <div class="data-label">Custom Path</div>
+          <div style="width: 100%;">
+            <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+              <input type="text" id="custom-download-path" placeholder="/Users/.../Vault/Clippings"
+                     style="flex: 1; padding: 10px 14px; border: 2px solid var(--border); border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 13px;">
+              <button id="browse-path" class="btn btn-secondary" style="padding: 8px 16px; font-size: 12px; white-space: nowrap;">
+                <span>📁 Browse</span>
+              </button>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button id="save-custom-path" class="btn btn-primary" style="padding: 8px 16px; font-size: 12px;">
+                <span>Save Path</span>
+              </button>
+              <button id="clear-custom-path" class="btn btn-secondary" style="padding: 8px 16px; font-size: 12px;">
+                <span>Clear</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="data-row">
+          <div class="data-label">Folder Name</div>
+          <div class="data-value loading" id="requested-folder">Loading...</div>
+        </div>
+
+        <div class="data-row">
+          <div class="data-label">Detected</div>
+          <div class="data-value loading" id="actual-path">Awaiting first clip...</div>
+        </div>
+
+        <div class="data-row">
+          <div class="data-label">Status</div>
+          <div>
+            <span class="status-badge unknown" id="path-status">
+              <span>⏳</span>
+              <span>Unknown</span>
+            </span>
+          </div>
+        </div>
+
+        <div class="help-text">
+          <strong>Custom Path:</strong> Enter the full path to your Obsidian vault's Clippings folder.<br><br>
+          <strong>Easy way to get the path:</strong> In Finder, navigate to the folder, then press <code>Option+Cmd+C</code> to copy the path, then paste here.<br><br>
+          Mac aliases are supported. Leave empty to use Chrome's default Downloads folder.
+        </div>
+      </div>
+
+      <!-- Statistics Section -->
+      <div class="section">
+        <div class="section-header">
+          <h2 class="section-title">Statistics</h2>
+        </div>
+
+        <div class="stats">
+          <div class="stat">
+            <div class="stat-value loading" id="total-clips">0</div>
+            <div class="stat-label">Total</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value loading" id="successful-clips">0</div>
+            <div class="stat-label">Success</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value loading" id="failed-clips">0</div>
+            <div class="stat-label">Failed</div>
+          </div>
+        </div>
+
+        <div class="help-text">
+          <strong>Auto-Sync:</strong> Files are automatically synced to your vault every 5 minutes via the background sync script.
+          Check <code>~/.claude/logs/clip-sync.log</code> for sync history.
+        </div>
+      </div>
+      <!-- Phase 2 Features Section -->
+      <div class="section">
+        <div class="section-header">
+          <h2 class="section-title">Smart Clipping Features</h2>
+        </div>
+
+        <div class="data-row">
+          <div class="data-label">Clipped Badge</div>
+          <div>
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+              <input type="checkbox" id="enable-clipped-badge" style="width: 20px; height: 20px; cursor: pointer;" checked>
+              <span style="font-weight: 500;">Show ✓ on icon when page was clipped</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="data-row">
+          <div class="data-label">Archive Mode</div>
+          <div>
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+              <input type="checkbox" id="enable-archive-mode" style="width: 20px; height: 20px; cursor: pointer;">
+              <span style="font-weight: 500;">Auto-archive paywalled sites</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Site Management for Archive Mode -->
+        <div class="data-row" id="archive-sites-section" style="display: none;">
+          <div class="data-label">Managed Sites</div>
+          <div style="width: 100%;">
+            <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+              <input type="text" id="new-archive-site" placeholder="Add site (e.g., example.com)"
+                     style="flex: 1; padding: 10px 14px; border: 2px solid var(--border); border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 13px;">
+              <button id="add-archive-site" class="button button-secondary" style="padding: 10px 16px; white-space: nowrap;">
+                <span>+ Add</span>
+              </button>
+            </div>
+            <div id="archive-sites-list" style="max-height: 200px; overflow-y: auto; border: 2px solid var(--border); border-radius: 8px; padding: 8px;">
+              <!-- Sites will be populated by JavaScript -->
+            </div>
+            <div style="margin-top: 8px; font-size: 12px; color: var(--gray-500);">
+              <span id="archive-sites-count">0</span> sites configured
+            </div>
+          </div>
+        </div>
+
+        <div class="data-row">
+          <div class="data-label">Medium Bypass</div>
+          <div>
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+              <input type="checkbox" id="enable-medium-bypass" style="width: 20px; height: 20px; cursor: pointer;">
+              <span style="font-weight: 500;">Bypass Medium paywall (via archive.ph)</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="help-text">
+          <strong>Archive Mode:</strong> Routes configured sites through archive.ph before clipping to bypass paywalls. Enable the toggle and manage your site list above.<br><br>
+          <strong>Medium Bypass:</strong> Routes Medium articles through archive.ph to access full content.
+        </div>
+      </div>
+
+      <!-- Twitter Bookmark Sync Section -->
+      <div class="section">
+        <div class="section-header">
+          <h2 class="section-title">
+            <span class="status-led" id="twitter-sync-led"></span>
+            Twitter Bookmark Sync
+          </h2>
+        </div>
+
+        <div class="data-row">
+          <div class="data-label">Auto-Sync</div>
+          <div>
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+              <input type="checkbox" id="enable-twitter-sync" style="width: 20px; height: 20px; cursor: pointer;">
+              <span style="font-weight: 500;">Enable automatic syncing</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="data-row">
+          <div class="data-label">Interval</div>
+          <div>
+            <select id="sync-interval" style="padding: 8px 12px; border: 2px solid var(--black); background: var(--white); font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer;">
+              <option value="15">Every 15 minutes</option>
+              <option value="30" selected>Every 30 minutes</option>
+              <option value="60">Every hour</option>
+              <option value="180">Every 3 hours</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="data-row">
+          <div class="data-label">Last Sync</div>
+          <div class="data-value loading" id="last-sync-time">Never</div>
+        </div>
+
+        <div class="data-row">
+          <div class="data-label">Total Synced</div>
+          <div class="data-value loading" id="total-synced-count">0</div>
+        </div>
+
+        <div class="stats">
+          <div class="stat">
+            <div class="stat-value loading" id="bookmarks-found">0</div>
+            <div class="stat-label">Found</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value loading" id="newly-synced">0</div>
+            <div class="stat-label">New</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value loading" id="already-synced">0</div>
+            <div class="stat-label">Skipped</div>
+          </div>
+        </div>
+
+        <div class="help-text">
+          <strong>How it works:</strong> The extension periodically checks your Twitter bookmarks and automatically clips any new bookmarked tweets. Already-synced tweets are tracked by ID and never re-clipped, even after files are moved to your vault.
+        </div>
+      </div>
+    </div>
+
+    <!-- Twitter Sync Actions -->
+    <div class="actions">
+      <button class="btn btn-primary" id="sync-twitter-now">
+        <span>🔄 Sync Bookmarks Now</span>
+      </button>
+      <button class="btn btn-secondary" id="reset-twitter-tracking">
+        <span>🗑️ Reset Tracking</span>
+      </button>
+    </div>
+
+    <!-- Main Actions -->
+    <div class="actions">
+      <button class="btn btn-primary" id="view-history">
+        <span>📋 View Full History</span>
+      </button>
+      <button class="btn btn-primary" id="bulk-clip-tabs" title="Clip all tabs in current window (Ctrl+Shift+A)">
+        <span>📑 Bulk Clip All Tabs</span>
+      </button>
+      <button class="btn btn-secondary" id="refresh-stats">
+        <span>🔄 Refresh Data</span>
+      </button>
+      <button class="btn btn-secondary" id="export-settings">
+        <span>💾 Export Settings</span>
+      </button>
+      <button class="btn btn-secondary" id="import-settings">
+        <span>📥 Import Settings</span>
+      </button>
+      <input type="file" id="import-file-input" accept=".json" style="display: none;">
+    </div>
+
+    <footer>
+      <div>Quick Obsidian Clipper</div>
+      <div class="version">v2.4.0 — Clipped Badge & Custom Download Path</div>
+    </footer>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>

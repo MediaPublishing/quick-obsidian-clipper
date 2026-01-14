@@ -1,0 +1,29 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Node (if using build tools)
+node_modules/
+package-lock.json
+
+# Build artifacts
+dist/
+build/
+
+# Logs
+*.log
+
+# Packed extension
+*.crx
+*.pem
+*.zip
+
+# Temporary files
+*.tmp
+*.bak
