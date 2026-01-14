@@ -214,6 +214,11 @@ cd quick-obsidian-clipper
 
 ## Changelog
 
+### v2.4.1 (2026-02-01)
+- Hardened handler injection with fallback paths (YouTube, Perplexity, Twitter bookmarks)
+- Ensured general extraction still runs if a handler script is missing
+- Removed SVG nodes before sanitization to avoid noisy transform errors
+
 ### v2.4.0 (2026-01-13)
 - Added clipped badge indicator (green checkmark on icon)
 - Added custom download path configuration

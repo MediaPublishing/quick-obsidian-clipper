@@ -44,6 +44,10 @@ class TwitterHandler {
   async waitForTweet(timeout) {
     const startTime = Date.now();
 
+    // Initial delay to let X.com's React app hydrate
+    console.log('TwitterHandler: Waiting for initial page render...');
+    await this.sleep(1500);
+
     while (Date.now() - startTime < timeout) {
       // Check for tweet article with multiple selectors
       const tweet = document.querySelector('article[data-testid="tweet"]') ||
@@ -51,22 +55,32 @@ class TwitterHandler {
                    document.querySelector('[data-testid="cellInnerDiv"] article');
 
       if (tweet) {
-        console.log('TwitterHandler: Tweet found');
+        // Additional wait to ensure tweet content is fully rendered
+        await this.sleep(500);
+        console.log('TwitterHandler: Tweet found and rendered');
         return;
       }
 
-      await this.sleep(500);
+      await this.sleep(300);
     }
 
-    console.warn('TwitterHandler: Timeout waiting for tweet');
+    console.warn('TwitterHandler: Timeout waiting for tweet after', timeout, 'ms');
   }
 
   extractMainTweet() {
     // Try different selectors for the main tweet
     const tweetArticles = document.querySelectorAll('article[data-testid="tweet"], article[role="article"]');
 
+    console.log('TwitterHandler: Found', tweetArticles?.length || 0, 'tweet articles');
+
     if (!tweetArticles || tweetArticles.length === 0) {
       console.warn('TwitterHandler: No tweet articles found');
+      // Last resort: try to find ANY article element
+      const anyArticle = document.querySelector('article');
+      if (anyArticle) {
+        console.log('TwitterHandler: Found generic article element, trying extraction');
+        return this.extractTweetData(anyArticle);
+      }
       return null;
     }
 
@@ -408,8 +422,9 @@ class TwitterHandler {
   }
 
   try {
-    console.log('TwitterHandler: Extracting tweet...');
-    const data = await handler.extract(15000);
+    console.log('TwitterHandler: Starting extraction for', url);
+    // Increased timeout for slow X.com pages (20 seconds)
+    const data = await handler.extract(20000);
 
     console.log('TwitterHandler: Sending to background...', data.title);
 

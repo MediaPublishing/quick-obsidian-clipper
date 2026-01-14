@@ -954,10 +954,19 @@ async function handlePerplexityPage(tab) {
 
   try {
     // Inject perplexity-handler.js to trigger native export or DOM extraction
-    await chrome.scripting.executeScript({
-      target: { tabId: tab.id },
-      files: ['src/handlers/perplexity-handler.js']
-    });
+    const injected = await injectScriptFilesWithFallback(
+      tab.id,
+      ['src/handlers/perplexity-handler.js'],
+      ['perplexity-handler.js'],
+      'Perplexity handler'
+    );
+
+    if (!injected) {
+      console.warn('Perplexity handler unavailable, falling back to general extraction.');
+      await injectContentScript(tab.id);
+      return;
+    }
+
     console.log('Perplexity handler injected');
   } catch (error) {
     console.error('Failed to inject Perplexity handler:', error);
@@ -978,6 +987,28 @@ async function injectContentScript(tabId) {
     files: ['content.js']
   });
   console.log('Content script injected');
+}
+
+async function tryInjectScriptFiles(tabId, files, label) {
+  try {
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      files
+    });
+    return true;
+  } catch (error) {
+    console.warn(`${label} injection failed:`, error);
+    return false;
+  }
+}
+
+async function injectScriptFilesWithFallback(tabId, primaryFiles, fallbackFiles, label) {
+  const injectedPrimary = await tryInjectScriptFiles(tabId, primaryFiles, label);
+  if (injectedPrimary || !fallbackFiles?.length) {
+    return injectedPrimary;
+  }
+
+  return tryInjectScriptFiles(tabId, fallbackFiles, `${label} (fallback)`);
 }
 
 // Track pending extractions by tab ID
@@ -1803,26 +1834,40 @@ function isArchiveDomain(url) {
 async function handleYouTubeVideo(tab) {
   console.log('YouTube video detected, extracting with transcript...');
 
-  // Inject YouTube handler and content script
-  await chrome.scripting.executeScript({
-    target: { tabId: tab.id },
-    files: ['src/handlers/youtube-handler.js', 'content.js']
-  });
+  const handlerInjected = await injectScriptFilesWithFallback(
+    tab.id,
+    ['src/handlers/youtube-handler.js'],
+    ['youtube-handler.js'],
+    'YouTube handler'
+  );
 
-  console.log('YouTube handler and content script injected');
+  if (!handlerInjected) {
+    console.warn('YouTube handler unavailable, continuing with general extraction.');
+  }
+
+  await injectContentScript(tab.id);
+
+  console.log('YouTube content script injected');
 }
 
 // Handler: Twitter/X pages
 async function handleTwitterPage(tab) {
   console.log('Twitter/X page detected, using dedicated handler...');
 
-  // Inject Twitter handler (which auto-extracts and sends message)
-  await chrome.scripting.executeScript({
-    target: { tabId: tab.id },
-    files: ['src/handlers/twitter-handler.js']
-  });
+  const handlerInjected = await injectScriptFilesWithFallback(
+    tab.id,
+    ['src/handlers/twitter-handler.js'],
+    ['twitter-handler.js'],
+    'Twitter handler'
+  );
 
-  console.log('Twitter handler injected');
+  if (handlerInjected) {
+    console.log('Twitter handler injected');
+    return;
+  }
+
+  console.warn('Twitter handler unavailable, falling back to general extraction.');
+  await injectContentScript(tab.id);
 }
 
 // ===== TWITTER BOOKMARK SYNC FUNCTIONS =====
@@ -1874,10 +1919,16 @@ async function handleTwitterBookmarkSync() {
     await waitForTabLoad(tab.id);
 
     // Inject bookmark scraper script
-    await chrome.scripting.executeScript({
-      target: { tabId: tab.id },
-      files: ['src/handlers/twitter-bookmark-scraper.js']
-    });
+    const scraperInjected = await injectScriptFilesWithFallback(
+      tab.id,
+      ['src/handlers/twitter-bookmark-scraper.js'],
+      ['twitter-bookmark-scraper.js'],
+      'Twitter bookmark scraper'
+    );
+
+    if (!scraperInjected) {
+      throw new Error('Twitter bookmark scraper script not found. Ensure src/handlers is included in the extension package.');
+    }
 
     console.log('Scraper script injected - waiting for results...');
 
