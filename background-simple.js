@@ -956,7 +956,7 @@ async function handlePerplexityPage(tab) {
     // Inject perplexity-handler.js to trigger native export or DOM extraction
     await chrome.scripting.executeScript({
       target: { tabId: tab.id },
-      files: ['perplexity-handler.js']
+      files: ['src/handlers/perplexity-handler.js']
     });
     console.log('Perplexity handler injected');
   } catch (error) {
@@ -1806,7 +1806,7 @@ async function handleYouTubeVideo(tab) {
   // Inject YouTube handler and content script
   await chrome.scripting.executeScript({
     target: { tabId: tab.id },
-    files: ['youtube-handler.js', 'content.js']
+    files: ['src/handlers/youtube-handler.js', 'content.js']
   });
 
   console.log('YouTube handler and content script injected');
@@ -1819,7 +1819,7 @@ async function handleTwitterPage(tab) {
   // Inject Twitter handler (which auto-extracts and sends message)
   await chrome.scripting.executeScript({
     target: { tabId: tab.id },
-    files: ['twitter-handler.js']
+    files: ['src/handlers/twitter-handler.js']
   });
 
   console.log('Twitter handler injected');
@@ -1876,7 +1876,7 @@ async function handleTwitterBookmarkSync() {
     // Inject bookmark scraper script
     await chrome.scripting.executeScript({
       target: { tabId: tab.id },
-      files: ['twitter-bookmark-scraper.js']
+      files: ['src/handlers/twitter-bookmark-scraper.js']
     });
 
     console.log('Scraper script injected - waiting for results...');
