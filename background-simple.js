@@ -314,26 +314,27 @@ async function handleContentExtracted(data, tab) {
     const cleanedData = cleanYouTubeContent(data);
     const normalizedData = normalizeContent(cleanedData);
 
-    if (isLikelyTwitterLoginGate(normalizedData)) {
+    // Get settings
+    const settings = await getSettings();
+    const classifiedData = applyClipClassification(normalizedData, settings);
+
+    if (isLikelyTwitterLoginGate(classifiedData)) {
       throw new Error('Twitter/X login required. Please log in and try again.');
     }
 
     // Create markdown content
-    const markdown = createMarkdown(normalizedData);
-
-    // Get settings
-    const settings = await getSettings();
+    const markdown = createMarkdown(classifiedData);
 
     // Create filename
-    const filename = createFilename(normalizedData, settings);
+    const filename = createFilename(classifiedData, settings);
 
     // Download file
     const downloadId = await downloadFile(markdown, filename, settings.saveLocation);
 
     // Log to history
     await logToHistory({
-      url: data.url,
-      title: data.title,
+      url: classifiedData.url,
+      title: classifiedData.title,
       filename: filename,
       timestamp: new Date().toISOString(),
       status: 'success',
@@ -357,8 +358,8 @@ async function handleContentExtracted(data, tab) {
 
     // Log failure to history
     await logToHistory({
-      url: data.url,
-      title: data.title,
+      url: classifiedData.url,
+      title: classifiedData.title,
       timestamp: new Date().toISOString(),
       status: 'failed',
       error: error.message
@@ -448,6 +449,133 @@ function normalizeContent(data) {
   return normalized;
 }
 
+function applyClipClassification(data, settings) {
+  if (!data || typeof data !== 'object') {
+    return data;
+  }
+
+  const clipKind = detectClipKind(data, settings);
+  const tags = buildTags(data, clipKind);
+
+  const classified = {
+    ...data,
+    clip_kind: clipKind,
+    tags
+  };
+
+  if (!classified.type) {
+    classified.type = clipKind;
+  }
+
+  return classified;
+}
+
+function detectClipKind(data, settings) {
+  if (data.type === 'tweet' || data.source === 'twitter') {
+    return 'tweet';
+  }
+
+  if (data.selectionOnly) {
+    return 'selection';
+  }
+
+  if (data.imageOnly) {
+    return 'image';
+  }
+
+  if (isYouTubeSite(data.url || '')) {
+    return 'video';
+  }
+
+  if (isGitHubRepoUrl(data.url || '')) {
+    return 'repo';
+  }
+
+  if (isNewsDomain(data.url || '', settings)) {
+    return 'news';
+  }
+
+  if (isLikelyHomepageUrl(data.url || '')) {
+    return 'bookmark';
+  }
+
+  return 'article';
+}
+
+function buildTags(data, clipKind) {
+  const tags = new Set();
+
+  if (clipKind === 'bookmark') {
+    tags.add('clipping/bookmark');
+  } else {
+    tags.add('clipping/web');
+  }
+
+  if (clipKind === 'news') {
+    tags.add('clipping/news');
+  }
+
+  if (clipKind === 'repo') {
+    tags.add('clipping/github');
+  }
+
+  if (clipKind === 'video') {
+    tags.add('clipping/youtube');
+  }
+
+  if (clipKind !== 'bookmark') {
+    tags.add('to-process');
+  }
+
+  if (Array.isArray(data.tags)) {
+    data.tags.forEach(tag => tags.add(tag));
+  }
+
+  return Array.from(tags);
+}
+
+function isNewsDomain(url, settings) {
+  const domain = getDomainFromUrl(url);
+  if (!domain) {
+    return false;
+  }
+  const sites = settings?.archiveSites || DEFAULT_SETTINGS.archiveSites || [];
+  return sites.some(site => domain === site || domain.endsWith(`.${site}`));
+}
+
+function isLikelyHomepageUrl(url) {
+  if (!url) return false;
+  try {
+    const parsed = new URL(url);
+    const path = parsed.pathname || '/';
+    const normalized = path.replace(/\/+$/, '/') || '/';
+    const homepagePaths = ['/', '/home', '/index.html', '/index.htm'];
+    if (!homepagePaths.includes(normalized.toLowerCase())) {
+      return false;
+    }
+    if (!parsed.search) {
+      return true;
+    }
+    const allowedParams = new Set([
+      'utm_source',
+      'utm_medium',
+      'utm_campaign',
+      'utm_term',
+      'utm_content',
+      'ref',
+      'source'
+    ]);
+    for (const key of parsed.searchParams.keys()) {
+      if (!allowedParams.has(key)) {
+        return false;
+      }
+    }
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
 function stripDuplicateTitle(content, title) {
   const trimmed = content.trimStart();
   const header = `# ${title}`;
@@ -523,6 +651,10 @@ function createMarkdown(data) {
     return createTweetMarkdown(data);
   }
 
+  if (data.clip_kind === 'bookmark') {
+    return createBookmarkMarkdown(data);
+  }
+
   const date = new Date().toISOString().split('T')[0];
   const now = new Date().toLocaleString();
 
@@ -536,6 +668,9 @@ function createMarkdown(data) {
                       'article');
 
   const source = data.source || 'web-clip';
+  const clipKind = data.clip_kind || contentType;
+  const tags = Array.isArray(data.tags) ? data.tags : buildTags(data, clipKind);
+  const tagsBlock = tags.map(tag => `  - ${tag}`).join('\n');
 
   const frontmatter = `---
 title: "${escapeQuotes(data.title)}"
@@ -545,11 +680,11 @@ date_saved: ${date}
 date_published: ${data.published || ''}
 author: ${data.author ? JSON.stringify(data.author) : '[]'}
 type: ${contentType}
+clip_kind: ${clipKind}
 word_count: ${stats.wordCount}
 reading_time: ${stats.readingTime}
 tags:
-  - clipping/web
-  - to-process
+${tagsBlock}
 ---
 
 `;
@@ -600,6 +735,7 @@ function createTweetMarkdown(data) {
     `date_saved: ${dateSaved}`,
     `date_published: ${datePublished}`,
     'type: tweet',
+    'clip_kind: tweet',
     `tweet_id: "${tweetId || ''}"`,
     `likes: ${likes}`,
     `retweets: ${retweets}`,
@@ -657,6 +793,50 @@ function createTweetMarkdown(data) {
   return lines.join('\n');
 }
 
+function createBookmarkMarkdown(data) {
+  const dateSaved = new Date().toISOString().split('T')[0];
+  const now = new Date().toLocaleString();
+  const clipKind = data.clip_kind || 'bookmark';
+  const tags = Array.isArray(data.tags) ? data.tags : buildTags(data, clipKind);
+  const tagsBlock = tags.map(tag => `  - ${tag}`).join('\n');
+  const source = data.source || 'web-clip';
+
+  const frontmatter = `---
+title: "${escapeQuotes(data.title)}"
+source: ${source}
+url: "${data.url}"
+date_saved: ${dateSaved}
+date_published: ${data.published || ''}
+author: ${data.author ? JSON.stringify(data.author) : '[]'}
+type: bookmark
+clip_kind: bookmark
+word_count: 0
+reading_time: 0
+tags:
+${tagsBlock}
+---
+
+`;
+
+  const bodyLines = [
+    `# ${data.title}`,
+    '',
+    `**URL:** ${data.url}`,
+    `**Saved:** ${now}`,
+    data.siteName ? `**Site:** ${data.siteName}` : '',
+    data.description ? `**Description:** ${data.description}` : '',
+    '',
+    '---',
+    '',
+    '## Notes',
+    '',
+    '<!-- Add your thoughts here -->',
+    ''
+  ];
+
+  return frontmatter + bodyLines.filter(Boolean).join('\n');
+}
+
 // Calculate word count and reading time
 function calculateReadingStats(content) {
   if (!content || typeof content !== 'string') {
@@ -674,12 +854,16 @@ function calculateReadingStats(content) {
 
   const wordCount = plainText.split(/\s+/).filter(word => word.length > 0).length;
 
+  if (!wordCount) {
+    return { wordCount: 0, readingTime: 0 };
+  }
+
   // Average reading speed: 200 words per minute
   const readingTime = Math.ceil(wordCount / 200);
 
   return {
     wordCount,
-    readingTime: readingTime || 1 // Minimum 1 minute
+    readingTime
   };
 }
 

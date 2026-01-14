@@ -214,6 +214,11 @@ cd quick-obsidian-clipper
 
 ## Changelog
 
+### v2.4.5 (2026-01-14)
+- Added auto-detected clip kinds (bookmark/news/repo/video) with tags
+- Added homepage detection to save lightweight bookmark notes
+- Added domain-based filename prefixes for faster scanning
+
 ### v2.4.4 (2026-01-14)
 - Fixed Twitter clipping output (single frontmatter, normalized handles, richer fields)
 - Added login-gate detection to avoid empty tweet clips
