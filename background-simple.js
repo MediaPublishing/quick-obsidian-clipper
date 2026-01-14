@@ -27,6 +27,7 @@ const DEFAULT_SETTINGS = {
   trackHistory: true,
   showClippedBadge: true,  // Show indicator when page has been clipped
   useDomainPrefixes: true,  // Add domain prefixes to filenames
+  homepageAsBookmark: false,  // Treat homepage URLs as lightweight bookmarks
   domainPrefixRules: [
     { domain: 'x.com', prefix: 'x' },
     { domain: 'twitter.com', prefix: 'x' },
@@ -495,7 +496,7 @@ function detectClipKind(data, settings) {
     return 'news';
   }
 
-  if (isLikelyHomepageUrl(data.url || '')) {
+  if (settings?.homepageAsBookmark && isLikelyHomepageUrl(data.url || '')) {
     return 'bookmark';
   }
 

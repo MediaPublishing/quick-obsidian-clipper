@@ -214,6 +214,10 @@ cd quick-obsidian-clipper
 
 ## Changelog
 
+### v2.4.6 (2026-01-14)
+- Added a toggle to treat homepages as bookmark-only clips
+- Default behavior now keeps full-page content unless toggled
+
 ### v2.4.5 (2026-01-14)
 - Added auto-detected clip kinds (bookmark/news/repo/video) with tags
 - Added homepage detection to save lightweight bookmark notes

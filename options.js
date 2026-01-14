@@ -395,6 +395,12 @@ function loadPhase2Settings() {
     if (prefixCheckbox) {
       prefixCheckbox.checked = settings.useDomainPrefixes !== false;
     }
+
+    // Update homepage bookmark toggle
+    const homepageCheckbox = $('enable-homepage-bookmarks');
+    if (homepageCheckbox) {
+      homepageCheckbox.checked = settings.homepageAsBookmark || false;
+    }
   });
 }
 
@@ -453,6 +459,20 @@ if (domainPrefixesEl) {
         if (prefixSection) {
           prefixSection.style.display = e.target.checked ? 'flex' : 'none';
         }
+      });
+    });
+  });
+}
+
+// Homepage bookmark toggle handler
+const homepageBookmarksEl = $('enable-homepage-bookmarks');
+if (homepageBookmarksEl) {
+  homepageBookmarksEl.addEventListener('change', (e) => {
+    chrome.storage.local.get(['settings'], (result) => {
+      const settings = result.settings || {};
+      settings.homepageAsBookmark = e.target.checked;
+      chrome.storage.local.set({ settings }, () => {
+        console.log('Homepage as bookmark:', e.target.checked);
       });
     });
   });

@@ -543,6 +543,16 @@
           </div>
         </div>
 
+        <div class="data-row">
+          <div class="data-label">Homepage Clips</div>
+          <div>
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+              <input type="checkbox" id="enable-homepage-bookmarks" style="width: 20px; height: 20px; cursor: pointer;">
+              <span style="font-weight: 500;">Treat homepages as lightweight bookmarks</span>
+            </label>
+          </div>
+        </div>
+
         <div class="data-row" id="prefix-rules-section" style="display: none;">
           <div class="data-label">Prefix Rules</div>
           <div style="width: 100%;">
@@ -567,7 +577,8 @@
         <div class="help-text">
           <strong>Archive Mode:</strong> Routes configured sites through archive.ph before clipping to bypass paywalls. Enable the toggle and manage your site list above.<br><br>
           <strong>Medium Bypass:</strong> Routes Medium articles through archive.ph to access full content.<br><br>
-          <strong>Filename Prefixes:</strong> Adds short prefixes (x/yt/gh) after the date for faster scanning.
+          <strong>Filename Prefixes:</strong> Adds short prefixes (x/yt/gh) after the date for faster scanning.<br><br>
+          <strong>Homepage Clips:</strong> When enabled, root URLs save as quick bookmarks instead of full-page content.
         </div>
       </div>
 
@@ -665,7 +676,7 @@
 
     <footer>
       <div>Quick Obsidian Clipper</div>
-      <div class="version">v2.4.5 — Auto Clip Kinds & Bookmark Mode</div>
+      <div class="version">v2.4.6 — Homepage Bookmark Toggle</div>
     </footer>
   </div>
 

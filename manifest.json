@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Quick Obsidian Clipper",
-  "version": "2.4.5",
+  "version": "2.4.6",
   "description": "One-click web clipper with smart features - saves to Downloads, syncs to Obsidian",
   "permissions": [
     "storage",
