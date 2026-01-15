@@ -954,13 +954,15 @@ function extractContentSnippet(content, maxWords = 8) {
 
 function extractTweetIdFromUrl(url) {
   if (!url) return '';
-  const match = url.match(/\/status\/(\\d+)/);
+  const match = url.match(/\/status\/(\d+)/);
   return match ? match[1] : '';
 }
 
 function extractYouTubeId(url) {
   if (!url) return '';
-  const match = url.match(/[?&]v=([^&]+)/) || url.match(/youtu\\.be\\/([^?]+)/) || url.match(/\\/shorts\\/([^?]+)/);
+  const match = url.match(/[?&]v=([^&]+)/) ||
+    url.match(/youtu\.be\/([^?]+)/) ||
+    url.match(/\/shorts\/([^?]+)/);
   return match ? match[1] : '';
 }
 
@@ -995,7 +997,7 @@ function getDomainFromUrl(url) {
   if (!url) return '';
   try {
     const parsed = new URL(url);
-    return parsed.hostname.toLowerCase().replace(/^www\\./, '');
+    return parsed.hostname.toLowerCase().replace(/^www\./, '');
   } catch (error) {
     return '';
   }
