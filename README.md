@@ -4,7 +4,9 @@
 
 [![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-blue?logo=googlechrome)](https://developer.chrome.com/docs/extensions/)
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-green)](https://developer.chrome.com/docs/extensions/mv3/intro/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+<img width="1364" height="2928" alt="CleanShot 2026-01-22 at 17 55 52" src="https://github.com/user-attachments/assets/5a5b87ae-6da2-4950-ab96-f426cfdd48c9" />
+
 
 ## Why Quick Obsidian Clipper?
 
@@ -262,10 +264,6 @@ cd quick-obsidian-clipper
 - Complete rewrite for Manifest V3
 - New options page UI
 - History tracking and statistics
-
-## License
-
-MIT License - see [LICENSE](LICENSE) for details.
 
 ## Acknowledgments
 
