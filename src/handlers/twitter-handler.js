@@ -1,7 +1,19 @@
 // Twitter/X Tweet Handler
 // Improved extraction for twitter.com and x.com with updated selectors
 
-console.log('Twitter Handler loaded');
+console.log('Twitter Handler loaded at', new Date().toISOString());
+
+// IMMEDIATELY send a "handler loaded" signal to background
+// This helps debug if the script is being injected but crashing later
+try {
+  chrome.runtime.sendMessage({
+    type: 'TWITTER_HANDLER_LOADED',
+    url: window.location.href,
+    timestamp: new Date().toISOString()
+  });
+} catch (e) {
+  console.error('TwitterHandler: Failed to send load signal:', e);
+}
 
 class TwitterHandler {
   constructor() {
@@ -55,19 +67,38 @@ class TwitterHandler {
 
     // Initial delay to let X.com's React app hydrate
     console.log('TwitterHandler: Waiting for initial page render...');
-    await this.sleep(1500);
+    await this.sleep(2000);
 
     while (Date.now() - startTime < timeout) {
-      // Check for tweet article with multiple selectors
+      // Check for tweet article with multiple selectors (updated for 2026 X.com)
       const tweet = document.querySelector('article[data-testid="tweet"]') ||
                    document.querySelector('article[role="article"]') ||
-                   document.querySelector('[data-testid="cellInnerDiv"] article');
+                   document.querySelector('[data-testid="cellInnerDiv"] article') ||
+                   document.querySelector('div[data-testid="tweetText"]')?.closest('article') ||
+                   document.querySelector('div[data-testid="tweet"]') ||
+                   document.querySelector('[data-testid="primaryColumn"] article');
 
       if (tweet) {
-        // Additional wait to ensure tweet content is fully rendered
-        await this.sleep(500);
-        console.log('TwitterHandler: Tweet found and rendered');
-        return;
+        // Check if tweet content is actually visible
+        const tweetText = tweet.querySelector('[data-testid="tweetText"]');
+        const userName = tweet.querySelector('[data-testid="User-Name"]');
+
+        if (tweetText || userName) {
+          // Additional wait to ensure tweet content is fully rendered
+          await this.sleep(800);
+          console.log('TwitterHandler: Tweet found and rendered');
+          return;
+        }
+      }
+
+      // Check for login gate or error page
+      const loginPrompt = document.querySelector('[data-testid="loginButton"]') ||
+                         document.querySelector('a[href="/login"]') ||
+                         document.querySelector('a[href*="/i/flow/login"]');
+
+      if (loginPrompt && Date.now() - startTime > 5000) {
+        console.warn('TwitterHandler: Login gate detected');
+        throw new Error('Twitter/X requires login to view this tweet. Please log in first.');
       }
 
       await this.sleep(300);
@@ -77,13 +108,37 @@ class TwitterHandler {
   }
 
   extractMainTweet() {
-    // Try different selectors for the main tweet
-    const tweetArticles = document.querySelectorAll('article[data-testid="tweet"], article[role="article"]');
+    // Try different selectors for the main tweet (updated for 2026 X.com)
+    const tweetSelectors = [
+      'article[data-testid="tweet"]',
+      'article[role="article"]',
+      'div[data-testid="tweet"]',
+      '[data-testid="primaryColumn"] article',
+      '[data-testid="cellInnerDiv"] article'
+    ];
 
-    console.log('TwitterHandler: Found', tweetArticles?.length || 0, 'tweet articles');
+    let tweetArticles = null;
+    for (const selector of tweetSelectors) {
+      tweetArticles = document.querySelectorAll(selector);
+      if (tweetArticles && tweetArticles.length > 0) {
+        console.log(`TwitterHandler: Found ${tweetArticles.length} tweets using: ${selector}`);
+        break;
+      }
+    }
 
     if (!tweetArticles || tweetArticles.length === 0) {
-      console.warn('TwitterHandler: No tweet articles found');
+      console.warn('TwitterHandler: No tweet articles found with standard selectors');
+
+      // Try finding tweet content directly
+      const tweetText = document.querySelector('[data-testid="tweetText"]');
+      if (tweetText) {
+        const parentArticle = tweetText.closest('article') || tweetText.closest('[role="article"]');
+        if (parentArticle) {
+          console.log('TwitterHandler: Found tweet via tweetText ancestor');
+          return this.extractTweetData(parentArticle);
+        }
+      }
+
       // Last resort: try to find ANY article element
       const anyArticle = document.querySelector('article');
       if (anyArticle) {
@@ -93,10 +148,19 @@ class TwitterHandler {
       return null;
     }
 
-    // The main tweet is usually the first one on a status page
-    const mainTweet = tweetArticles[0];
+    // On a status page, the main tweet is usually the first one
+    // But we need to verify it has actual content
+    for (const article of tweetArticles) {
+      const hasContent = article.querySelector('[data-testid="tweetText"]');
+      if (hasContent) {
+        console.log('TwitterHandler: Selected main tweet with content');
+        return this.extractTweetData(article);
+      }
+    }
 
-    return this.extractTweetData(mainTweet);
+    // Fallback to first article
+    console.log('TwitterHandler: Using first article as main tweet');
+    return this.extractTweetData(tweetArticles[0]);
   }
 
   extractTweetData(article) {
@@ -153,27 +217,37 @@ class TwitterHandler {
   }
 
   extractAuthorName(article) {
-    // Try multiple selectors for author name (updated for 2024/2025 X layout)
+    // Try multiple selectors for author name (updated for 2026 X layout)
     const selectors = [
+      // Primary selectors for 2026 X.com
+      '[data-testid="User-Name"] div[dir="ltr"] > span > span',
+      '[data-testid="User-Name"] a[role="link"] div[dir="ltr"] span',
       '[data-testid="User-Name"] span:not([class*="r-"]):first-child',
       '[data-testid="User-Name"] > div > div > span',
       '[data-testid="User-Name"] a > div > div > span',
       '[data-testid="User-Name"] span[dir="auto"]',
       'a[role="link"][href^="/"] span[style*="text-overflow"]',
       'div[dir="ltr"] span[style*="text-overflow: unset"]',
-      // Newer X.com selectors
       'div[data-testid="User-Name"] span',
       'article a[role="link"][tabindex="-1"] span:first-child'
     ];
 
     for (const selector of selectors) {
       try {
-        const el = article.querySelector(selector);
-        if (el && el.textContent.trim()) {
-          const text = el.textContent.trim();
-          // Skip @handles and UI elements
-          if (!text.startsWith('@') && text.length > 0 && text.length < 100) {
-            return text;
+        const elements = article.querySelectorAll(selector);
+        for (const el of elements) {
+          if (el && el.textContent.trim()) {
+            const text = el.textContent.trim();
+            // Skip @handles, UI elements, and timestamps
+            if (!text.startsWith('@') &&
+                text.length > 0 &&
+                text.length < 100 &&
+                !text.match(/^\d+[hmdwy]?$/) &&  // Skip time indicators like "2h", "3d"
+                !text.match(/^[·•]$/) &&  // Skip separator dots
+                !['Follow', 'Following', 'Reply', 'Repost', 'Like', 'Share', 'More', 'Views', 'Bookmark', 'Quote', 'Undo repost'].includes(text)) {
+              console.log('TwitterHandler: Found author name:', text, 'via:', selector);
+              return text;
+            }
           }
         }
       } catch (e) {
@@ -188,7 +262,7 @@ class TwitterHandler {
       // Skip @ handles, numbers, and common UI text
       if (text && !text.startsWith('@') && !text.match(/^\d/) &&
           text.length > 1 && text.length < 50 &&
-          !['Follow', 'Following', 'Reply', 'Repost', 'Like', 'Share', 'More', 'Views', 'Bookmark'].includes(text)) {
+          !['Follow', 'Following', 'Reply', 'Repost', 'Like', 'Share', 'More', 'Views', 'Bookmark', 'Quote'].includes(text)) {
         return text;
       }
     }
@@ -225,13 +299,13 @@ class TwitterHandler {
   }
 
   extractTweetContent(article) {
-    // Try multiple selectors for tweet text (updated for 2024/2025 X layout)
+    // Try multiple selectors for tweet text (updated for 2026 X layout)
     const selectors = [
       '[data-testid="tweetText"]',
       '[data-testid="tweet-text-show-more-link"]', // Expanded tweet
       'div[data-testid="tweetText"] span',
-      'div[lang][dir="auto"]',
-      'article div[lang]',
+      'div[lang][dir="auto"]:not([data-testid="User-Name"] *)',
+      'article div[lang]:not([data-testid="User-Name"] *)',
       // Fallback for newer layouts
       'div[dir="auto"][lang] span',
       'div[lang] > span'
@@ -243,7 +317,11 @@ class TwitterHandler {
         if (el && el.textContent?.trim()) {
           const text = el.textContent.trim();
           // Make sure it's actual content, not UI text
-          if (text.length > 5 && !['Show more', 'Read more', 'Translate'].includes(text)) {
+          if (text.length > 5 &&
+              !['Show more', 'Read more', 'Translate', 'Show this thread'].includes(text) &&
+              !text.match(/^\d+[KMB]?$/) &&  // Skip engagement numbers
+              !text.match(/^@\w+$/)) {  // Skip lone @handles
+            console.log('TwitterHandler: Found content via:', selector);
             return text;
           }
         }
@@ -257,7 +335,14 @@ class TwitterHandler {
       const tweetBody = article.querySelector('[data-testid="tweetText"]') ||
                         article.querySelector('div[lang]');
       if (tweetBody) {
-        return tweetBody.innerText?.trim() || '';
+        // Clone and clean up - remove any nested metadata
+        const clone = tweetBody.cloneNode(true);
+        clone.querySelectorAll('[data-testid="User-Name"]').forEach(el => el.remove());
+        const text = clone.innerText?.trim() || '';
+        if (text.length > 5) {
+          console.log('TwitterHandler: Found content via fallback clone method');
+          return text;
+        }
       }
     } catch (e) {
       console.warn('TwitterHandler: Fallback content extraction failed:', e);
@@ -401,44 +486,80 @@ class TwitterHandler {
 
 // Auto-execute extraction and send to background
 (async function() {
-  const url = window.location.href;
-  const handler = new TwitterHandler();
+  console.log('TwitterHandler: IIFE starting...');
 
-  if (!handler.canHandle(url)) {
-    console.log('TwitterHandler: Not a Twitter/X page');
-    return;
+  const url = window.location.href;
+  console.log('TwitterHandler: URL is', url);
+
+  // Helper to safely send message (always succeeds or logs error)
+  function safeSendMessage(data) {
+    console.log('TwitterHandler: safeSendMessage called with title:', data?.title);
+    try {
+      chrome.runtime.sendMessage({
+        type: 'CONTENT_EXTRACTED',
+        data: data
+      }, (response) => {
+        if (chrome.runtime.lastError) {
+          console.error('TwitterHandler: Error sending message:', chrome.runtime.lastError);
+        } else {
+          console.log('TwitterHandler: CONTENT_EXTRACTED message sent successfully');
+        }
+      });
+    } catch (e) {
+      console.error('TwitterHandler: Failed to send message:', e);
+    }
+  }
+
+  // Create fallback data that will always be sent
+  function createFallbackData(reason) {
+    console.log('TwitterHandler: Creating fallback data, reason:', reason);
+    return {
+      title: document.title || 'Twitter',
+      url: window.location.href,
+      content: `# ${document.title || 'Tweet'}\n\n**URL:** ${window.location.href}\n\n> Tweet extraction failed: ${reason}\n>\n> This may be due to a login requirement or page structure change.\n\n## Notes\n\n<!-- Add your notes here -->`,
+      timestamp: new Date().toISOString()
+    };
   }
 
   try {
+    console.log('TwitterHandler: Creating handler instance...');
+    const handler = new TwitterHandler();
+
+    // Check if this is a Twitter page
+    console.log('TwitterHandler: Checking if Twitter page...');
+    if (!handler.canHandle(url)) {
+      console.log('TwitterHandler: Not a Twitter/X page, sending fallback');
+      safeSendMessage(createFallbackData('Not a Twitter/X page'));
+      return;
+    }
+    console.log('TwitterHandler: Is a Twitter page');
+
+    // Check for login gate early
+    console.log('TwitterHandler: Checking for login gate...');
+    const loginGate = document.querySelector('[data-testid="loginButton"]') ||
+                     document.querySelector('a[href="/login"]') ||
+                     document.querySelector('a[href*="/i/flow/login"]') ||
+                     document.querySelector('[data-testid="sheetDialog"]');
+
+    if (loginGate) {
+      console.log('TwitterHandler: Login gate detected, sending fallback');
+      safeSendMessage(createFallbackData('Twitter login required'));
+      return;
+    }
+    console.log('TwitterHandler: No login gate detected');
+
     console.log('TwitterHandler: Starting extraction for', url);
-    // Increased timeout for slow X.com pages (20 seconds)
-    const data = await handler.extract(20000);
+    // Increased timeout for slow X.com pages (15 seconds)
+    const data = await handler.extract(15000);
 
-    console.log('TwitterHandler: Sending to background...', data.title);
-
-    chrome.runtime.sendMessage({
-      type: 'CONTENT_EXTRACTED',
-      data: data
-    }, (response) => {
-      if (chrome.runtime.lastError) {
-        console.error('TwitterHandler: Error sending message:', chrome.runtime.lastError);
-      } else {
-        console.log('TwitterHandler: Message sent successfully');
-      }
-    });
+    console.log('TwitterHandler: Extraction complete, title:', data?.title);
+    console.log('TwitterHandler: Sending to background...');
+    safeSendMessage(data);
 
   } catch (error) {
-    console.error('TwitterHandler: Extraction failed:', error);
-
-    // Send fallback with basic info
-    chrome.runtime.sendMessage({
-      type: 'CONTENT_EXTRACTED',
-      data: {
-        title: document.title || 'Twitter',
-        url: window.location.href,
-        content: `# ${document.title}\n\n**URL:** ${window.location.href}\n\n> Tweet extraction failed. The page structure may have changed.\n>\n> Error: ${error.message}\n\n## Notes\n\n<!-- Add your notes here -->`,
-        timestamp: new Date().toISOString()
-      }
-    });
+    console.error('TwitterHandler: IIFE error:', error);
+    safeSendMessage(createFallbackData(error.message || 'Unknown error'));
   }
+
+  console.log('TwitterHandler: IIFE complete');
 })();

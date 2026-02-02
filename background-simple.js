@@ -210,6 +210,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
+  // Debug: Track when Twitter handler is loaded
+  if (message.type === 'TWITTER_HANDLER_LOADED') {
+    console.log('🐦 Twitter handler loaded in tab', sender.tab?.id, 'for URL:', message.url);
+    sendResponse({ success: true });
+    return true;
+  }
+
   if (message.type === 'UPDATE_TWITTER_SYNC_SETTINGS') {
     updateTwitterSyncSettings(message.data)
       .then(() => sendResponse({ success: true }))
@@ -299,9 +306,9 @@ async function handleContentExtracted(data, tab) {
     if (duplicateInfo.isDuplicate) {
       console.log('Duplicate URL detected:', data.url);
 
-      // Show badge on extension icon
+      // Show badge on extension icon (async, don't block)
       const tabId = tab?.id || null;
-      showDuplicateBadge(tabId);
+      showDuplicateBadge(tabId).catch(() => {});
 
       // Also show notification
       showNotification(
@@ -347,9 +354,9 @@ async function handleContentExtracted(data, tab) {
       showNotification('Clipped Successfully', `Saved: ${data.title}`, 'icons/icon48.png');
     }
 
-    // Show clipped badge on this tab (replaces any duplicate badge)
+    // Show clipped badge on this tab (replaces any duplicate badge, async don't block)
     if (tab?.id) {
-      showClippedBadge(tab.id);
+      showClippedBadge(tab.id).catch(() => {});
     }
 
     return { filename, downloadId };
@@ -1144,9 +1151,9 @@ async function logToHistory(clipData) {
       // Add to beginning of array
       history.unshift(clipData);
 
-      // Keep last 500 clips
-      if (history.length > 500) {
-        history.length = 500;
+      // Keep last 2000 clips (increased from 500)
+      if (history.length > 2000) {
+        history.length = 2000;
       }
 
       chrome.storage.local.set({ clippingHistory: history }, () => {
@@ -1286,18 +1293,25 @@ function showNotification(title, message, iconUrl) {
 }
 
 // Show badge on extension icon (for duplicates, errors, etc.)
-function showBadge(text, color, tabId = null) {
+async function showBadge(text, color, tabId = null) {
   console.log('Showing badge:', text, 'color:', color, 'tabId:', tabId);
 
   // Set badge text and color
   if (tabId && typeof tabId === 'number') {
+    // Check if tab still exists before trying to show badge
+    try {
+      await chrome.tabs.get(tabId);
+    } catch (e) {
+      // Tab was closed, silently skip
+      return;
+    }
     // Show badge only on specific tab
-    chrome.action.setBadgeText({ text: String(text), tabId: tabId });
-    chrome.action.setBadgeBackgroundColor({ color: color, tabId: tabId });
+    chrome.action.setBadgeText({ text: String(text), tabId: tabId }).catch(() => {});
+    chrome.action.setBadgeBackgroundColor({ color: color, tabId: tabId }).catch(() => {});
   } else {
     // Show badge globally (on all tabs)
-    chrome.action.setBadgeText({ text: String(text) });
-    chrome.action.setBadgeBackgroundColor({ color: color });
+    chrome.action.setBadgeText({ text: String(text) }).catch(() => {});
+    chrome.action.setBadgeBackgroundColor({ color: color }).catch(() => {});
   }
 
   // Clear badge after 5 seconds
@@ -1311,14 +1325,22 @@ function showBadge(text, color, tabId = null) {
 }
 
 // Show duplicate badge on extension icon
-function showDuplicateBadge(tabId = null) {
+async function showDuplicateBadge(tabId = null) {
   // Use "2x" as badge text (shorter and clearer than "DUP")
-  showBadge('2x', [255, 107, 0, 255], tabId); // Orange badge - RGBA array format
+  return showBadge('2x', [255, 107, 0, 255], tabId); // Orange badge - RGBA array format
 }
 
 // Show "clipped" badge (green checkmark) - persistent until tab changes
-function showClippedBadge(tabId) {
+async function showClippedBadge(tabId) {
   if (!tabId || typeof tabId !== 'number') return;
+
+  // Check if tab still exists before trying to show badge
+  try {
+    await chrome.tabs.get(tabId);
+  } catch (e) {
+    // Tab was closed (common during bookmark sync), silently skip
+    return;
+  }
 
   console.log('Showing clipped badge for tab:', tabId);
 
@@ -1521,40 +1543,31 @@ function isPerplexitySite(url) {
 
 // Handle Perplexity page clipping
 async function handlePerplexityPage(tab) {
-  console.log('Handling Perplexity page:', tab.url);
+  console.log('🔮 Handling Perplexity page:', tab.url);
 
-  try {
-    // Inject perplexity-handler.js to trigger native export or DOM extraction
-    const injected = await injectScriptFilesWithFallback(
-      tab.id,
-      ['src/handlers/perplexity-handler.js'],
-      ['perplexity-handler.js'],
-      'Perplexity handler'
-    );
+  // Content script injection is blocked by Chrome policy on perplexity.ai
+  // Go directly to the manual clipboard popup
+  console.log('🔮 Opening Perplexity manual clip popup...');
+  await openPerplexityPopup(tab.url, tab.title);
+}
 
-    if (!injected) {
-      console.warn('Perplexity handler unavailable, falling back to general extraction.');
-      await injectContentScript(tab.id);
-      return;
-    }
+// Open manual clip popup for Perplexity (when content scripts are blocked)
+async function openPerplexityPopup(pageUrl, pageTitle) {
+  // Pass the original page URL and title as query parameters
+  const params = new URLSearchParams({
+    url: pageUrl || '',
+    title: pageTitle || 'Perplexity Search'
+  });
+  const popupUrl = chrome.runtime.getURL('perplexity-popup.html') + '?' + params.toString();
 
-    console.log('Perplexity handler injected');
-    schedulePerplexityFallback(tab.id);
-  } catch (error) {
-    console.error('Failed to inject Perplexity handler:', error);
-
-    // Fallback: show user instructions
-    showNotification(
-      'Perplexity Clipping',
-      'Use Perplexity\'s Share menu → Copy as Markdown, then clip again.',
-      'icons/icon48.png'
-    );
-    try {
-      await injectContentScript(tab.id);
-    } catch (injectError) {
-      console.warn('Perplexity fallback injection failed:', injectError);
-    }
-  }
+  // Create popup window sized to fit content without scrolling
+  await chrome.windows.create({
+    url: popupUrl,
+    type: 'popup',
+    width: 480,
+    height: 600,
+    focused: true
+  });
 }
 
 // Helper: Inject content script
@@ -1568,13 +1581,17 @@ async function injectContentScript(tabId) {
 
 async function tryInjectScriptFiles(tabId, files, label) {
   try {
-    await chrome.scripting.executeScript({
+    console.log(`Injecting ${label} into tab ${tabId}:`, files);
+    const result = await chrome.scripting.executeScript({
       target: { tabId },
       files
     });
+    console.log(`${label} injection succeeded:`, result);
     return true;
   } catch (error) {
-    console.warn(`${label} injection failed:`, error);
+    console.error(`${label} injection FAILED for files:`, files);
+    console.error(`${label} injection error:`, error.message);
+    console.error(`${label} injection error details:`, error);
     return false;
   }
 }
@@ -2684,33 +2701,66 @@ async function handleBookmarksScraped(data) {
 }
 
 async function clipTweetFromBookmark(bookmark) {
-  console.log(`Clipping tweet: ${bookmark.url}`);
+  console.log(`📋 clipTweetFromBookmark: Starting for ${bookmark.url}`);
 
   // Open tweet in new tab
   const tab = await chrome.tabs.create({
     url: bookmark.url,
     active: false
   });
+  console.log(`📋 clipTweetFromBookmark: Tab created with ID ${tab.id}`);
+
+  // IMPORTANT: Set up the message listener BEFORE injecting the script
+  // to avoid race condition where script sends message before listener is ready
+  console.log(`📋 clipTweetFromBookmark: Setting up extraction listener for tab ${tab.id}`);
+  const extractionPromise = waitForExtraction(tab.id, 25000);
 
   try {
     // Wait for page to load
+    console.log(`📋 clipTweetFromBookmark: Waiting for tab ${tab.id} to load...`);
     await waitForTabLoad(tab.id);
+    console.log(`📋 clipTweetFromBookmark: Tab ${tab.id} loaded`);
 
-    // Inject content script
-    await chrome.scripting.executeScript({
-      target: { tabId: tab.id },
-      files: ['content.js']
-    });
+    // Get the actual URL after redirects (twitter.com -> x.com)
+    const actualTab = await chrome.tabs.get(tab.id);
+    console.log(`📋 clipTweetFromBookmark: Actual URL after load: ${actualTab.url}`);
 
-    // Content script will send CONTENT_EXTRACTED message
-    // Wait for extraction to complete (with timeout)
-    // Twitter/X pages are JavaScript-heavy and may need more time
-    await waitForExtraction(tab.id, 20000);
+    // Extra wait for Twitter's React app to hydrate
+    // Background tabs may load slower than active tabs
+    console.log(`📋 clipTweetFromBookmark: Waiting 3s for React hydration...`);
+    await sleep(3000);
+
+    // Use the dedicated Twitter handler instead of generic content.js
+    // This ensures we use the updated DOM selectors for 2026 X.com
+    console.log(`📋 clipTweetFromBookmark: Injecting Twitter handler...`);
+    const handlerInjected = await injectScriptFilesWithFallback(
+      tab.id,
+      ['src/handlers/twitter-handler.js'],
+      ['twitter-handler.js'],
+      'Twitter handler'
+    );
+    console.log(`📋 clipTweetFromBookmark: Handler injection result: ${handlerInjected}`);
+
+    if (!handlerInjected) {
+      // Fallback to content.js only if Twitter handler unavailable
+      console.warn('📋 clipTweetFromBookmark: Twitter handler not found, falling back to content.js');
+      await chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        files: ['content.js']
+      });
+    }
+
+    // Wait for extraction to complete (listener was set up before injection)
+    console.log(`📋 clipTweetFromBookmark: Waiting for extraction message...`);
+    await extractionPromise;
+    console.log(`📋 clipTweetFromBookmark: Extraction complete!`);
 
     // Close tab
     await chrome.tabs.remove(tab.id);
+    console.log(`📋 clipTweetFromBookmark: Tab ${tab.id} closed`);
 
   } catch (error) {
+    console.error(`📋 clipTweetFromBookmark: ERROR - ${error.message}`);
     // Make sure to close tab even on error
     try {
       await chrome.tabs.remove(tab.id);
@@ -2723,8 +2773,11 @@ async function clipTweetFromBookmark(bookmark) {
 
 // Helper: Wait for content extraction to complete
 function waitForExtraction(tabId, timeout = 20000) {
+  console.log(`⏳ waitForExtraction: Setting up listener for tab ${tabId} with ${timeout}ms timeout`);
+
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => {
+      console.error(`⏳ waitForExtraction: TIMEOUT after ${timeout}ms for tab ${tabId}`);
       cleanup();
       reject(new Error('Content extraction timed out'));
     }, timeout);
@@ -2735,13 +2788,20 @@ function waitForExtraction(tabId, timeout = 20000) {
     }
 
     function messageListener(message, sender) {
+      // Log ALL messages for debugging
+      if (sender.tab?.id === tabId) {
+        console.log(`⏳ waitForExtraction: Received message type="${message.type}" from tab ${tabId}`);
+      }
+
       if (message.type === 'CONTENT_EXTRACTED' && sender.tab?.id === tabId) {
+        console.log(`⏳ waitForExtraction: Got CONTENT_EXTRACTED from tab ${tabId}, resolving...`);
         cleanup();
         resolve();
       }
     }
 
     chrome.runtime.onMessage.addListener(messageListener);
+    console.log(`⏳ waitForExtraction: Listener registered for tab ${tabId}`);
   });
 }
 
