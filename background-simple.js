@@ -159,7 +159,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       clearPerplexityFallback(tabId);
     }
 
-    // Check if this is a pending extraction from archive/medium handler
+    // Check if this is a pending extraction from archive/medium/bookmark-sync handler
     if (tabId && pendingExtractions.has(tabId)) {
       const pending = pendingExtractions.get(tabId);
       // Use the original URL instead of archive.ph/freedium URL
@@ -167,6 +167,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         message.data.url = pending.originalUrl;
       }
       pending.resolve(message.data);
+      // Don't also call handleContentExtracted — the caller will handle it
+      sendResponse({ success: true, handled: 'pending-extraction' });
+      return true;
     }
 
     handleContentExtracted(message.data, sender.tab)
@@ -364,10 +367,10 @@ async function handleContentExtracted(data, tab) {
   } catch (error) {
     console.error('Clipping failed:', error);
 
-    // Log failure to history
+    // Log failure to history (use data as fallback since classifiedData may not exist)
     await logToHistory({
-      url: classifiedData.url,
-      title: classifiedData.title,
+      url: data?.url || 'unknown',
+      title: data?.title || 'unknown',
       timestamp: new Date().toISOString(),
       status: 'failed',
       error: error.message
@@ -2509,9 +2512,12 @@ async function handleTwitterBookmarkSync() {
   // Mark sync as in progress with timestamp
   await updateSyncStatus({ syncInProgress: true, syncLockTimestamp: new Date().toISOString() });
 
+  // Keep service worker alive during sync via periodic alarm
+  await chrome.alarms.create('syncKeepalive', { periodInMinutes: 0.4 }); // ~25 seconds
+
   try {
     // Open Twitter bookmarks page in new tab
-    const BOOKMARKS_URL = 'https://twitter.com/i/bookmarks';
+    const BOOKMARKS_URL = 'https://x.com/i/bookmarks';
 
     const tab = await chrome.tabs.create({
       url: BOOKMARKS_URL,
@@ -2809,9 +2815,12 @@ async function markTweetSynced(tweetId) {
   const settings = await getSettings();
   const syncSettings = settings.twitterBookmarkSync || DEFAULT_SETTINGS.twitterBookmarkSync;
 
-  // Add to synced IDs
+  // Add to synced IDs (capped at 10000 to prevent storage bloat)
   if (!syncSettings.syncedTweetIds.includes(tweetId)) {
     syncSettings.syncedTweetIds.push(tweetId);
+    if (syncSettings.syncedTweetIds.length > 10000) {
+      syncSettings.syncedTweetIds = syncSettings.syncedTweetIds.slice(-10000);
+    }
   }
 
   // Update settings
@@ -2830,6 +2839,11 @@ async function updateSyncStatus(updates) {
 
   settings.twitterBookmarkSync = syncSettings;
   await chrome.storage.local.set({ settings });
+
+  // Clear keepalive alarm when sync ends
+  if (updates.syncInProgress === false) {
+    chrome.alarms.clear('syncKeepalive').catch(() => {});
+  }
 
   console.log('Updated sync status:', updates);
 }
@@ -2892,6 +2906,12 @@ async function setupAutoSyncAlarm() {
 
 // Alarm listener for auto-sync
 chrome.alarms.onAlarm.addListener(async (alarm) => {
+  if (alarm.name === 'syncKeepalive') {
+    // Just a keepalive ping to prevent service worker termination during sync
+    console.log('🔄 Sync keepalive ping');
+    return;
+  }
+
   if (alarm.name === 'twitterBookmarkAutoSync') {
     console.log('Auto-sync alarm triggered');
     try {
@@ -2902,15 +2922,22 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
   }
 });
 
-// Helper: Wait for tab to finish loading
-function waitForTabLoad(tabId) {
-  return new Promise((resolve) => {
-    chrome.tabs.onUpdated.addListener(function listener(updatedTabId, changeInfo) {
+// Helper: Wait for tab to finish loading (with timeout to prevent hanging)
+function waitForTabLoad(tabId, timeout = 30000) {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      chrome.tabs.onUpdated.removeListener(listener);
+      reject(new Error(`Tab ${tabId} load timeout after ${timeout}ms`));
+    }, timeout);
+
+    function listener(updatedTabId, changeInfo) {
       if (updatedTabId === tabId && changeInfo.status === 'complete') {
+        clearTimeout(timer);
         chrome.tabs.onUpdated.removeListener(listener);
         resolve();
       }
-    });
+    }
+    chrome.tabs.onUpdated.addListener(listener);
   });
 }
 

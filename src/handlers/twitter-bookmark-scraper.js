@@ -192,7 +192,7 @@ class TwitterBookmarkScraper {
     const username = authorLink ? authorLink.href.split('/')[3] : 'unknown';
 
     // Construct tweet URL
-    const tweetUrl = `https://twitter.com/${username}/status/${tweetId}`;
+    const tweetUrl = `https://x.com/${username}/status/${tweetId}`;
 
     // Extract timestamp (optional)
     const timeElement = article.querySelector('time');
