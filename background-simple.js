@@ -5,14 +5,82 @@
 console.log('Quick Obsidian Clipper - Background script loaded');
 
 // Import rate limiter utility (will be injected dynamically)
+// If dynamic import fails for any reason, fall back to a simple delay-based limiter.
+class SimpleDelayRateLimiter {
+  constructor(maxRequests = 5, windowMs = 1000) {
+    this.maxRequests = maxRequests;
+    this.windowMs = windowMs;
+    this.minDelayMs = Math.ceil(windowMs / maxRequests);
+    this.lastRequestAt = 0;
+  }
+
+  async batchProcess(items, processFn, options = {}) {
+    const {
+      onProgress = null,
+      continueOnError = true
+    } = options;
+
+    const results = [];
+    const errors = [];
+
+    for (let i = 0; i < items.length; i++) {
+      try {
+        const now = Date.now();
+        const waitTime = this.minDelayMs - (now - this.lastRequestAt);
+        if (waitTime > 0) {
+          await sleep(waitTime);
+        }
+        this.lastRequestAt = Date.now();
+
+        const result = await processFn(items[i], i);
+        results.push({ success: true, data: result, index: i });
+
+        if (onProgress) {
+          onProgress({
+            current: i + 1,
+            total: items.length,
+            success: results.filter(r => r.success).length,
+            failed: errors.length
+          });
+        }
+      } catch (error) {
+        errors.push({ error, item: items[i], index: i });
+        results.push({ success: false, error, index: i });
+
+        if (onProgress) {
+          onProgress({
+            current: i + 1,
+            total: items.length,
+            success: results.filter(r => r.success).length,
+            failed: errors.length
+          });
+        }
+
+        if (!continueOnError) {
+          throw error;
+        }
+      }
+    }
+
+    return {
+      results,
+      errors,
+      successCount: results.filter(r => r.success).length,
+      errorCount: errors.length
+    };
+  }
+}
+
 let RateLimiter = null;
 const rateLimiterReady = import('./rate-limiter.js')
   .then(module => {
-    RateLimiter = module.RateLimiter || window.RateLimiter;
+    // window is not available in MV3 service workers; module export is the primary path.
+    RateLimiter = module.RateLimiter || (typeof window !== 'undefined' ? window.RateLimiter : null);
     console.log('Rate limiter loaded');
   })
   .catch(error => {
-    console.warn('Rate limiter not available:', error);
+    console.warn('Rate limiter import failed; using simple delay limiter:', error);
+    RateLimiter = SimpleDelayRateLimiter;
   });
 
 // Bulk clip state for status popup
@@ -143,6 +211,20 @@ chrome.runtime.onStartup.addListener(() => {
         await chrome.storage.local.set({ settings });
       }
     }
+
+    // 3. Clear overly old persisted sync progress (prevents resuming days later)
+    const progressResult = await chrome.storage.local.get(['twitterBookmarkSyncProgress']);
+    const progress = progressResult.twitterBookmarkSyncProgress;
+    if (progress?.pendingTweetIds?.length) {
+      const startedAt = progress.queuedAt || progress.startedAt || progress.createdAt;
+      if (startedAt) {
+        const ageMs = Date.now() - new Date(startedAt).getTime();
+        if (ageMs > (24 * 60 * 60 * 1000)) {
+          console.warn('Clearing old persisted Twitter sync progress');
+          await chrome.storage.local.remove(['twitterBookmarkSyncProgress']);
+        }
+      }
+    }
   } catch (e) {
     console.warn('Failed during service worker initialization:', e);
   }
@@ -201,8 +283,32 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if (message.type === 'BOOKMARKS_SCRAPE_FAILED') {
     console.error('Bookmark scrape failed:', message.error);
-    showNotification('Bookmark Sync Failed', message.error, 'icons/icon48.png');
-    sendResponse({ success: false, error: message.error });
+
+    (async () => {
+      try {
+        // Clean up tab if it exists
+        if (bookmarkSyncTabId) {
+          try {
+            await chrome.tabs.remove(bookmarkSyncTabId);
+          } catch (e) {
+            console.warn('Failed to close bookmark tab after scrape failure:', e);
+          }
+          bookmarkSyncTabId = null;
+        }
+
+        // Unlock sync + stop keepalive
+        await updateSyncStatus({ syncInProgress: false, syncLockTimestamp: null });
+
+        // Clear any partially stored progress
+        await clearTwitterSyncProgress();
+      } catch (e) {
+        console.warn('Cleanup after BOOKMARKS_SCRAPE_FAILED failed:', e);
+      }
+
+      showNotification('Bookmark Sync Failed', message.error, 'icons/icon48.png');
+      sendResponse({ success: false, error: message.error });
+    })();
+
     return true;
   }
 
@@ -2486,6 +2592,225 @@ async function handleTwitterPage(tab) {
 // Global state for tracking bookmark sync tab
 let bookmarkSyncTabId = null;
 
+// Persisted progress so a subsequent run can resume after service worker termination.
+const TWITTER_SYNC_PROGRESS_KEY = 'twitterBookmarkSyncProgress';
+const TWITTER_SYNC_PROGRESS_MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24h
+
+async function getTwitterSyncProgress() {
+  const result = await chrome.storage.local.get([TWITTER_SYNC_PROGRESS_KEY]);
+  return result[TWITTER_SYNC_PROGRESS_KEY] || null;
+}
+
+async function setTwitterSyncProgress(progress) {
+  if (!progress) {
+    await chrome.storage.local.remove([TWITTER_SYNC_PROGRESS_KEY]);
+    return;
+  }
+  await chrome.storage.local.set({ [TWITTER_SYNC_PROGRESS_KEY]: progress });
+}
+
+async function clearTwitterSyncProgress() {
+  await chrome.storage.local.remove([TWITTER_SYNC_PROGRESS_KEY]);
+}
+
+function buildTweetUrl(tweetId) {
+  // Works reliably without needing the username part of the URL.
+  return `https://x.com/i/web/status/${tweetId}`;
+}
+
+async function clipTweetFromBookmarkWithRetry(bookmark, options = {}) {
+  const {
+    maxRetries = 2,
+    baseDelayMs = 1000
+  } = options;
+
+  let attempt = 0;
+  // total attempts = 1 + maxRetries
+  while (true) {
+    try {
+      return await clipTweetFromBookmark(bookmark);
+    } catch (error) {
+      if (attempt >= maxRetries) {
+        throw error;
+      }
+
+      const backoffMs = baseDelayMs * Math.pow(2, attempt); // 1s, 2s, ...
+      console.warn(
+        `Retrying tweet clip ${bookmark.tweetId} (attempt ${attempt + 1}/${maxRetries}) after ${backoffMs}ms:`,
+        error
+      );
+      await sleep(backoffMs);
+      attempt++;
+    }
+  }
+}
+
+async function runTwitterBookmarkQueueSync(progress, { resumed = false } = {}) {
+  const pendingTweetIds = progress?.pendingTweetIds || [];
+  const totalQueued = pendingTweetIds.length;
+  const totalFound = progress?.totalFound ?? totalQueued;
+  const alreadySyncedAtStart = progress?.alreadySyncedAtStart ?? Math.max(0, totalFound - totalQueued);
+
+  if (totalQueued === 0) {
+    return { totalFound, newlySynced: 0, alreadySynced: alreadySyncedAtStart, failed: 0 };
+  }
+
+  // Load synced IDs once; we'll also maintain an in-memory set during this run.
+  const settings = await getSettings();
+  const syncSettings = settings.twitterBookmarkSync || DEFAULT_SETTINGS.twitterBookmarkSync;
+  const syncedIds = new Set(syncSettings.syncedTweetIds || []);
+
+  // Ensure we have a limiter (module or fallback)
+  await rateLimiterReady;
+  const limiter = RateLimiter ? new RateLimiter(5, 1000) : new SimpleDelayRateLimiter(5, 1000);
+
+  let cursor = progress?.cursor || 0;
+  let failCount = progress?.failCount || 0;
+
+  // Cap failure history to avoid storage bloat
+  const failedTweets = Array.isArray(progress?.failedTweets) ? progress.failedTweets.slice(0, 100) : [];
+
+  const toProcess = pendingTweetIds.slice(cursor);
+
+  if (resumed) {
+    console.log(`Resuming bookmark sync: cursor=${cursor}/${totalQueued}`);
+  } else {
+    console.log(`Starting bookmark sync queue: total=${totalQueued}`);
+  }
+
+  const result = await limiter.batchProcess(
+    toProcess,
+    async (tweetId, idx) => {
+      const absoluteIndex = cursor + idx;
+
+      // If it was synced earlier (e.g. during a previous partial run), just advance.
+      if (syncedIds.has(tweetId)) {
+        const newProgress = {
+          ...progress,
+          cursor: absoluteIndex + 1,
+          lastTweetId: tweetId,
+          lastUpdatedAt: new Date().toISOString(),
+          failCount,
+          failedTweets
+        };
+        await setTwitterSyncProgress(newProgress);
+        return { tweetId, skipped: true };
+      }
+
+      try {
+        await clipTweetFromBookmarkWithRetry(
+          { tweetId, url: buildTweetUrl(tweetId) },
+          { maxRetries: 2, baseDelayMs: 1000 }
+        );
+
+        await markTweetSynced(tweetId);
+        syncedIds.add(tweetId);
+
+        const newProgress = {
+          ...progress,
+          cursor: absoluteIndex + 1,
+          lastTweetId: tweetId,
+          lastUpdatedAt: new Date().toISOString(),
+          failCount,
+          failedTweets
+        };
+        await setTwitterSyncProgress(newProgress);
+
+        return { tweetId, success: true };
+      } catch (error) {
+        failCount++;
+
+        failedTweets.unshift({
+          tweetId,
+          error: error?.message || String(error),
+          at: new Date().toISOString()
+        });
+        if (failedTweets.length > 100) failedTweets.length = 100;
+
+        const newProgress = {
+          ...progress,
+          cursor: absoluteIndex + 1,
+          lastTweetId: tweetId,
+          lastUpdatedAt: new Date().toISOString(),
+          failCount,
+          failedTweets
+        };
+        await setTwitterSyncProgress(newProgress);
+
+        // Let limiter count this as an error
+        throw error;
+      }
+    },
+    {
+      onProgress: (p) => {
+        const absoluteCurrent = cursor + p.current;
+        console.log(
+          `Progress: ${absoluteCurrent}/${totalQueued} (${p.success} success, ${p.failed} failed)`
+        );
+
+        chrome.action.setBadgeText({
+          text: `${absoluteCurrent}/${totalQueued}`
+        });
+        chrome.action.setBadgeBackgroundColor({ color: '#1DA1F2' });
+      },
+      continueOnError: true
+    }
+  );
+
+  // Clear badge when done
+  chrome.action.setBadgeText({ text: '' });
+
+  // Compute overall success for this queue (successful = queued - failed)
+  const successfulQueueCount = totalQueued - failCount;
+
+  // Finish sync
+  await updateSyncStatus({
+    syncInProgress: false,
+    syncLockTimestamp: null,
+    lastSyncTimestamp: new Date().toISOString(),
+    totalBookmarksFound: totalFound,
+    totalNewlySynced: successfulQueueCount
+  });
+
+  // Log to history
+  await logToHistory({
+    type: 'twitter-bookmark-sync',
+    timestamp: new Date().toISOString(),
+    bookmarksFound: totalFound,
+    newlySynced: successfulQueueCount,
+    alreadySynced: alreadySyncedAtStart,
+    failed: failCount,
+    resumed: resumed,
+    status: failCount > 0 ? 'partial' : 'success'
+  });
+
+  // Show notification
+  if (successfulQueueCount > 0) {
+    showNotification(
+      resumed ? 'Twitter Bookmarks Sync Resumed' : 'Twitter Bookmarks Synced',
+      `Synced ${successfulQueueCount} new bookmark${successfulQueueCount > 1 ? 's' : ''}${failCount > 0 ? ` (${failCount} failed)` : ''}`,
+      'icons/icon48.png'
+    );
+  } else if (failCount > 0) {
+    showNotification(
+      'Twitter Bookmark Sync Finished',
+      `No new bookmarks synced (${failCount} failed)` ,
+      'icons/icon48.png'
+    );
+  }
+
+  // Clear persisted progress now that we're done
+  await clearTwitterSyncProgress();
+
+  return {
+    totalFound,
+    newlySynced: successfulQueueCount,
+    alreadySynced: alreadySyncedAtStart,
+    failed: failCount,
+    rateLimiter: RateLimiter ? 'available' : 'fallback'
+  };
+}
+
 async function handleTwitterBookmarkSync() {
   console.log('Starting Twitter bookmark sync...');
 
@@ -2506,6 +2831,42 @@ async function handleTwitterBookmarkSync() {
       // Lock is stale, auto-reset it
       console.warn('Stale sync lock detected, resetting...');
       await updateSyncStatus({ syncInProgress: false, syncLockTimestamp: null });
+    }
+  }
+
+  // If there is persisted progress from a previous partial run, resume it.
+  const existingProgress = await getTwitterSyncProgress();
+  if (existingProgress?.pendingTweetIds?.length) {
+    const progressCursor = existingProgress.cursor || 0;
+    const total = existingProgress.pendingTweetIds.length;
+
+    // If progress is already complete, clear it.
+    if (progressCursor >= total) {
+      await clearTwitterSyncProgress();
+    } else {
+      const startedAt = existingProgress.queuedAt || existingProgress.startedAt || existingProgress.createdAt;
+      const ageMs = startedAt ? (Date.now() - new Date(startedAt).getTime()) : 0;
+
+      if (startedAt && ageMs > TWITTER_SYNC_PROGRESS_MAX_AGE_MS) {
+        console.warn('Persisted sync progress is too old; clearing it.');
+        await clearTwitterSyncProgress();
+      } else {
+        console.log('Resuming Twitter bookmark sync from persisted progress...');
+
+        // Mark sync as in progress with timestamp
+        await updateSyncStatus({ syncInProgress: true, syncLockTimestamp: new Date().toISOString() });
+
+        // Keep service worker alive during sync via periodic alarm
+        await chrome.alarms.create('syncKeepalive', { periodInMinutes: 0.4 }); // ~25 seconds
+
+        try {
+          return await runTwitterBookmarkQueueSync(existingProgress, { resumed: true });
+        } catch (error) {
+          // Leave progress in place so the user can try again.
+          await updateSyncStatus({ syncInProgress: false, syncLockTimestamp: null });
+          throw error;
+        }
+      }
     }
   }
 
@@ -2588,8 +2949,9 @@ async function handleBookmarksScraped(data) {
 
   // Filter out already-synced bookmarks
   const newBookmarks = bookmarks.filter(b => !syncedIds.has(b.tweetId));
+  const alreadySyncedAtStart = totalFound - newBookmarks.length;
 
-  console.log(`Total bookmarks: ${totalFound}, New: ${newBookmarks.length}, Already synced: ${totalFound - newBookmarks.length}`);
+  console.log(`Total bookmarks: ${totalFound}, New: ${newBookmarks.length}, Already synced: ${alreadySyncedAtStart}`);
 
   if (newBookmarks.length === 0) {
     await updateSyncStatus({
@@ -2599,6 +2961,8 @@ async function handleBookmarksScraped(data) {
       totalBookmarksFound: totalFound,
       totalNewlySynced: 0
     });
+
+    await clearTwitterSyncProgress();
 
     showNotification(
       'Twitter Bookmarks Up to Date',
@@ -2614,96 +2978,22 @@ async function handleBookmarksScraped(data) {
     };
   }
 
-  // Use rate limiter for Twitter API protection
-  // Limit: 5 requests per second to avoid rate limiting
-  await rateLimiterReady; // Wait for rate limiter to load
-
-  const limiter = RateLimiter ? new RateLimiter(5, 1000) : null;
-  let successCount = 0;
-  let failCount = 0;
-
-  if (limiter) {
-    console.log(`Using rate limiter for ${newBookmarks.length} bookmarks (5 req/sec)`);
-
-    const result = await limiter.batchProcess(
-      newBookmarks,
-      async (bookmark) => {
-        await clipTweetFromBookmark(bookmark);
-        await markTweetSynced(bookmark.tweetId);
-        return bookmark;
-      },
-      {
-        onProgress: (progress) => {
-          console.log(`Progress: ${progress.current}/${progress.total} (${progress.success} success, ${progress.failed} failed)`);
-
-          // Update badge with progress
-          chrome.action.setBadgeText({
-            text: `${progress.current}/${progress.total}`
-          });
-          chrome.action.setBadgeBackgroundColor({ color: '#1DA1F2' }); // Twitter blue
-        },
-        continueOnError: true
-      }
-    );
-
-    successCount = result.successCount;
-    failCount = result.errorCount;
-
-    // Clear badge when done
-    chrome.action.setBadgeText({ text: '' });
-
-  } else {
-    // Fallback: sequential processing without rate limiting
-    console.warn('Rate limiter not available, using sequential processing');
-
-    for (const bookmark of newBookmarks) {
-      try {
-        console.log(`Clipping tweet ${bookmark.tweetId}...`);
-        await clipTweetFromBookmark(bookmark);
-        await markTweetSynced(bookmark.tweetId);
-        successCount++;
-      } catch (error) {
-        console.error(`Failed to clip tweet ${bookmark.tweetId}:`, error);
-        failCount++;
-      }
-    }
-  }
-
-  // Update sync stats
-  await updateSyncStatus({
-    syncInProgress: false,
-    syncLockTimestamp: null,
-    lastSyncTimestamp: new Date().toISOString(),
-    totalBookmarksFound: totalFound,
-    totalNewlySynced: successCount
-  });
-
-  // Log to history
-  await logToHistory({
-    type: 'twitter-bookmark-sync',
-    timestamp: new Date().toISOString(),
-    bookmarksFound: totalFound,
-    newlySynced: successCount,
-    alreadySynced: totalFound - newBookmarks.length,
-    failed: failCount,
-    status: 'success'
-  });
-
-  // Show notification
-  if (successCount > 0) {
-    showNotification(
-      'Twitter Bookmarks Synced',
-      `Synced ${successCount} new bookmark${successCount > 1 ? 's' : ''}${failCount > 0 ? ` (${failCount} failed)` : ''}`,
-      'icons/icon48.png'
-    );
-  }
-
-  return {
+  // Persist progress so we can resume later if the service worker is terminated mid-sync.
+  const progress = {
+    version: 1,
+    queuedAt: new Date().toISOString(),
     totalFound,
-    newlySynced: successCount,
-    alreadySynced: totalFound - newBookmarks.length,
-    failed: failCount
+    alreadySyncedAtStart,
+    pendingTweetIds: newBookmarks.map(b => b.tweetId),
+    cursor: 0,
+    failCount: 0,
+    failedTweets: []
   };
+
+  await setTwitterSyncProgress(progress);
+
+  // Process the queue (includes retry logic + final stats update)
+  return await runTwitterBookmarkQueueSync(progress, { resumed: false });
 }
 
 async function clipTweetFromBookmark(bookmark) {
@@ -2876,6 +3166,7 @@ async function resetTwitterSyncTracking() {
   };
 
   await chrome.storage.local.set({ settings });
+  await clearTwitterSyncProgress();
 
   console.log('Reset Twitter sync tracking');
 
