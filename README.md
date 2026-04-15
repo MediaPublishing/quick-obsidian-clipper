@@ -47,20 +47,33 @@ Unlike other web clippers that require complex OAuth setups or paid subscription
 
 ## Installation
 
-### From Source (Development)
+### Install in Chrome, Brave, Arc, or Edge
 
-1. Clone this repository:
+1. Download or clone this repository:
    ```bash
-   git clone https://github.com/yourusername/quick-obsidian-clipper.git
+   git clone https://github.com/MediaPublishing/quick-obsidian-clipper.git
    ```
+   Or click **Code → Download ZIP** on GitHub and unzip it.
 
-2. Open Chrome and navigate to `chrome://extensions/`
+2. Open your browser's extensions page:
+   - Chrome: `chrome://extensions`
+   - Brave: `brave://extensions`
+   - Arc: `arc://extensions`
+   - Edge: `edge://extensions`
 
-3. Enable **Developer mode** (toggle in top right)
+3. Enable **Developer mode**
 
-4. Click **Load unpacked** and select the `quick-obsidian-clipper-extension` folder
+4. Click **Load unpacked**
 
-5. The extension icon will appear in your toolbar
+5. Select the root folder of this repo, `quick-obsidian-clipper`
+
+6. Pin the extension if you want one-click access from the toolbar
+
+### First-time setup
+
+1. Open the extension **Options** page
+2. Choose your download folder, or keep the default `Downloads/Obsidian-Clips/`
+3. Clip any page to test that markdown files land where you expect
 
 ### Keyboard Shortcuts
 
@@ -204,14 +217,11 @@ Contributions are welcome! Please:
 
 ```bash
 # Clone the repo
-git clone https://github.com/yourusername/quick-obsidian-clipper.git
+git clone https://github.com/MediaPublishing/quick-obsidian-clipper.git
 cd quick-obsidian-clipper
 
-# Load in Chrome
-# 1. Go to chrome://extensions/
-# 2. Enable Developer mode
-# 3. Click "Load unpacked"
-# 4. Select the extension folder
+# Then open your browser's extensions page,
+# enable Developer mode, and load this folder unpacked.
 ```
 
 ## Changelog
