@@ -167,9 +167,9 @@ The extension tracks all your clips:
 
 Access history via the **Options** page → **View History** button.
 
-## Twitter/X Bookmark Sync
+## X-Bookmark Sync
 
-Automatically sync your Twitter/X bookmarks:
+Automatically sync your X bookmarks:
 
 1. Enable Twitter Bookmark Sync in Options
 2. Set sync interval (15-60 minutes)
