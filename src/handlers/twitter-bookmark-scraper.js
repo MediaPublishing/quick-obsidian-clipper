@@ -56,9 +56,7 @@ class TwitterBookmarkScraper {
 
     while (Date.now() - startTime < maxWait) {
       // Try multiple selectors for tweet articles (updated for 2026 X.com)
-      const tweets = document.querySelectorAll('article[data-testid="tweet"]') ||
-                    document.querySelectorAll('article[role="article"]') ||
-                    document.querySelectorAll('[data-testid="cellInnerDiv"] article');
+      const tweets = this.findTweetArticles();
 
       if (tweets && tweets.length > 0) {
         console.log('Bookmarks loaded, found', tweets.length, 'tweets');
@@ -145,17 +143,7 @@ class TwitterBookmarkScraper {
 
   // Extract tweet data incrementally during scrolling (handles virtualized list)
   extractBookmarkDataIncremental() {
-    const tweetSelectors = [
-      'article[data-testid="tweet"]',
-      'article[role="article"]',
-      '[data-testid="cellInnerDiv"] article'
-    ];
-
-    let tweetArticles = null;
-    for (const selector of tweetSelectors) {
-      tweetArticles = document.querySelectorAll(selector);
-      if (tweetArticles.length > 0) break;
-    }
+    const tweetArticles = this.findTweetArticles();
 
     if (!tweetArticles || tweetArticles.length === 0) return;
 
@@ -170,6 +158,23 @@ class TwitterBookmarkScraper {
         // Silently skip problematic tweets during incremental extraction
       }
     });
+  }
+
+  // An empty NodeList is truthy, so querySelectorAll fallbacks must be
+  // selected by length rather than with `||`.
+  findTweetArticles() {
+    const selectors = [
+      'article[data-testid="tweet"]',
+      'article[role="article"]',
+      '[data-testid="cellInnerDiv"] article'
+    ];
+
+    for (const selector of selectors) {
+      const articles = document.querySelectorAll(selector);
+      if (articles.length > 0) return articles;
+    }
+
+    return [];
   }
 
   extractBookmarkData() {
