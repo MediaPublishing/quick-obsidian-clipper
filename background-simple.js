@@ -90,7 +90,7 @@ let bulkClipPopupId = null;
 // Default settings
 const DEFAULT_SETTINGS = {
   saveLocation: 'Obsidian-Clips',
-  customDownloadPath: '',  // User-configured download path (empty = use Chrome default)
+  customDownloadPath: '',  // Legacy setting; absolute paths are not supported by downloads API
   notifications: true,
   trackHistory: true,
   showClippedBadge: true,  // Show indicator when page has been clipped
@@ -147,6 +147,56 @@ const DEFAULT_SETTINGS = {
   }
 };
 
+function normalizeDownloadFolder(folder) {
+  const value = typeof folder === 'string'
+    ? folder.trim().replace(/^['"]|['"]$/g, '').replace(/\\/g, '/')
+    : '';
+
+  if (
+    !value ||
+    value.startsWith('/') ||
+    value.startsWith('~') ||
+    /^[A-Za-z]:\//.test(value) ||
+    value.split('/').includes('..')
+  ) {
+    return DEFAULT_SETTINGS.saveLocation;
+  }
+
+  return value.replace(/^\/+|\/+$/g, '') || DEFAULT_SETTINGS.saveLocation;
+}
+
+async function migrateDownloadSettings() {
+  const result = await chrome.storage.local.get(['settings']);
+  const existingSettings = result.settings || {};
+  const settings = {
+    ...DEFAULT_SETTINGS,
+    ...existingSettings,
+    saveLocation: normalizeDownloadFolder(existingSettings.saveLocation),
+    customDownloadPath: ''
+  };
+
+  if (existingSettings.twitterBookmarkSync) {
+    settings.twitterBookmarkSync = {
+      ...DEFAULT_SETTINGS.twitterBookmarkSync,
+      ...existingSettings.twitterBookmarkSync
+    };
+  }
+
+  const needsMigration =
+    settings.saveLocation !== existingSettings.saveLocation ||
+    Boolean(existingSettings.customDownloadPath);
+
+  if (needsMigration) {
+    await chrome.storage.local.set({
+      settings,
+      clipperDownloadPath: null
+    });
+    console.log('Normalized download settings for automatic saving:', settings.saveLocation);
+  }
+
+  return settings;
+}
+
 // Initialize extension
 chrome.runtime.onInstalled.addListener(() => {
   console.log('Extension installed/updated');
@@ -165,7 +215,10 @@ chrome.runtime.onInstalled.addListener(() => {
       };
     }
 
-    chrome.storage.local.set({ settings: mergedSettings }, () => {
+    mergedSettings.saveLocation = normalizeDownloadFolder(mergedSettings.saveLocation);
+    mergedSettings.customDownloadPath = '';
+
+    chrome.storage.local.set({ settings: mergedSettings, clipperDownloadPath: null }, () => {
       console.log('Settings initialized/updated:', mergedSettings);
       // Set up Twitter auto-sync alarm if enabled
       setupAutoSyncAlarm();
@@ -185,7 +238,10 @@ chrome.runtime.onStartup.addListener(() => {
   console.log('Service worker initializing...');
 
   try {
-    // 1. Check and set up alarms
+    // 1. Normalize legacy absolute download paths.
+    await migrateDownloadSettings();
+
+    // 2. Check and set up alarms
     const alarm = await chrome.alarms.get('twitterBookmarkAutoSync');
     if (!alarm) {
       console.log('No existing alarm found, setting up auto-sync alarm...');
@@ -194,7 +250,7 @@ chrome.runtime.onStartup.addListener(() => {
       console.log('Existing alarm found:', alarm);
     }
 
-    // 2. Clear any stale sync locks (if service worker was terminated during sync)
+    // 3. Clear any stale sync locks (if service worker was terminated during sync)
     const result = await chrome.storage.local.get(['settings']);
     const settings = result.settings || {};
     const syncSettings = settings.twitterBookmarkSync;
@@ -212,7 +268,7 @@ chrome.runtime.onStartup.addListener(() => {
       }
     }
 
-    // 3. Clear overly old persisted sync progress (prevents resuming days later)
+    // 4. Clear overly old persisted sync progress (prevents resuming days later)
     const progressResult = await chrome.storage.local.get(['twitterBookmarkSyncProgress']);
     const progress = progressResult.twitterBookmarkSyncProgress;
     if (progress?.pendingTweetIds?.length) {
@@ -1172,26 +1228,8 @@ function createFilename(data, settings) {
 
 // Download file using Chrome downloads API
 async function downloadFile(content, filename, folder) {
-  // Check if custom download path is configured
-  const settings = await getSettings();
-  let downloadPath;
-
-  if (settings.customDownloadPath && settings.customDownloadPath.trim()) {
-    // Use custom path - append folder name to the custom base path
-    // Custom path should be the full path to where clips should go
-    // We'll put files directly in the custom path without adding the folder
-    downloadPath = filename;
-
-    console.log('Using custom download path:', settings.customDownloadPath);
-
-    // Note: We can't directly specify an absolute path in Chrome downloads API,
-    // but we store it for the sync script to use. The actual download goes to
-    // Chrome's download folder with our folder structure.
-    downloadPath = `${folder}/${filename}`;
-  } else {
-    // Use default folder name (relative to Chrome downloads folder)
-    downloadPath = `${folder}/${filename}`;
-  }
+  const safeFolder = normalizeDownloadFolder(folder);
+  const downloadPath = `${safeFolder}/${filename}`;
 
   return new Promise((resolve, reject) => {
     // Use data URL instead of blob URL (service workers don't support URL.createObjectURL)
@@ -1200,7 +1238,6 @@ async function downloadFile(content, filename, folder) {
     chrome.downloads.download({
       url: dataUrl,
       filename: downloadPath,
-      saveAs: false,  // Auto-save, no dialog (but Chrome still shows notification)
       conflictAction: 'uniquify'  // Auto-rename if exists
     }, (downloadId) => {
       if (chrome.runtime.lastError) {
@@ -1385,7 +1422,20 @@ async function checkForDuplicateUrl(url) {
 function getSettings() {
   return new Promise((resolve) => {
     chrome.storage.local.get(['settings'], (result) => {
-      resolve(result.settings || DEFAULT_SETTINGS);
+      const settings = {
+        ...DEFAULT_SETTINGS,
+        ...(result.settings || {})
+      };
+      settings.twitterBookmarkSync = {
+        ...DEFAULT_SETTINGS.twitterBookmarkSync,
+        ...(result.settings?.twitterBookmarkSync || {})
+      };
+      settings.twitterBookmarkSync.syncedTweetIds = Array.isArray(
+        settings.twitterBookmarkSync.syncedTweetIds
+      ) ? settings.twitterBookmarkSync.syncedTweetIds : [];
+      settings.saveLocation = normalizeDownloadFolder(settings.saveLocation);
+      settings.customDownloadPath = '';
+      resolve(settings);
     });
   });
 }
@@ -2857,7 +2907,7 @@ async function handleTwitterBookmarkSync() {
         await updateSyncStatus({ syncInProgress: true, syncLockTimestamp: new Date().toISOString() });
 
         // Keep service worker alive during sync via periodic alarm
-        await chrome.alarms.create('syncKeepalive', { periodInMinutes: 0.4 }); // ~25 seconds
+        await chrome.alarms.create('syncKeepalive', { periodInMinutes: 0.5 }); // Chrome minimum: ~30 seconds
 
         try {
           return await runTwitterBookmarkQueueSync(existingProgress, { resumed: true });
@@ -2874,7 +2924,7 @@ async function handleTwitterBookmarkSync() {
   await updateSyncStatus({ syncInProgress: true, syncLockTimestamp: new Date().toISOString() });
 
   // Keep service worker alive during sync via periodic alarm
-  await chrome.alarms.create('syncKeepalive', { periodInMinutes: 0.4 }); // ~25 seconds
+  await chrome.alarms.create('syncKeepalive', { periodInMinutes: 0.5 }); // Chrome minimum: ~30 seconds
 
   try {
     // Open Twitter bookmarks page in new tab
@@ -2939,7 +2989,17 @@ async function handleBookmarksScraped(data) {
     bookmarkSyncTabId = null;
   }
 
-  const { bookmarks, totalFound } = data;
+  const rawBookmarks = Array.isArray(data?.bookmarks) ? data.bookmarks : [];
+  const bookmarks = Array.from(new Map(
+    rawBookmarks
+      .filter(bookmark => /^\d+$/.test(String(bookmark?.tweetId || '')))
+      .map(bookmark => [String(bookmark.tweetId), {
+        ...bookmark,
+        tweetId: String(bookmark.tweetId),
+        url: bookmark.url || buildTweetUrl(bookmark.tweetId)
+      }])
+  ).values());
+  const totalFound = bookmarks.length;
 
   const settings = await getSettings();
   const syncSettings = settings.twitterBookmarkSync || DEFAULT_SETTINGS.twitterBookmarkSync;
@@ -3216,19 +3276,32 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
 // Helper: Wait for tab to finish loading (with timeout to prevent hanging)
 function waitForTabLoad(tabId, timeout = 30000) {
   return new Promise((resolve, reject) => {
+    let settled = false;
+    const finish = (callback, value) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      chrome.tabs.onUpdated.removeListener(listener);
+      callback(value);
+    };
+
     const timer = setTimeout(() => {
       chrome.tabs.onUpdated.removeListener(listener);
-      reject(new Error(`Tab ${tabId} load timeout after ${timeout}ms`));
+      finish(reject, new Error(`Tab ${tabId} load timeout after ${timeout}ms`));
     }, timeout);
 
     function listener(updatedTabId, changeInfo) {
       if (updatedTabId === tabId && changeInfo.status === 'complete') {
-        clearTimeout(timer);
-        chrome.tabs.onUpdated.removeListener(listener);
-        resolve();
+        finish(resolve);
       }
     }
     chrome.tabs.onUpdated.addListener(listener);
+
+    // The tab can finish before the listener is registered, especially for a
+    // cached X page. Read the current state once to avoid a needless timeout.
+    chrome.tabs.get(tabId).then(tab => {
+      if (tab?.status === 'complete') finish(resolve);
+    }).catch(error => finish(reject, error));
   });
 }
 

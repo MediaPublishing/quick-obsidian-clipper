@@ -15,10 +15,10 @@ function loadData() {
       el.classList.remove('loading');
     });
 
-    // Update custom download path input
+    // Update relative download subfolder input
     const customPathInput = $('custom-download-path');
-    if (customPathInput && settings.customDownloadPath) {
-      customPathInput.value = settings.customDownloadPath;
+    if (customPathInput) {
+      customPathInput.value = settings.saveLocation || 'Obsidian-Clips';
     }
 
     // Update requested folder
@@ -246,58 +246,18 @@ loadTwitterSyncData();
 
 // ===== CUSTOM DOWNLOAD PATH HANDLER =====
 
-// Browse button - opens native folder picker
-const browsePathBtn = $('browse-path');
-if (browsePathBtn) {
-  browsePathBtn.addEventListener('click', async () => {
-    try {
-      // Check if File System Access API is available
-      if (!('showDirectoryPicker' in window)) {
-        alert('Folder picker not available in this browser.\n\nTo get the path manually:\n1. Open Finder\n2. Navigate to your target folder\n3. Press Option+Cmd+C to copy the path\n4. Paste it in the input field');
-        return;
-      }
-
-      // Open native folder picker
-      const dirHandle = await window.showDirectoryPicker({
-        mode: 'read',
-        startIn: 'documents'
-      });
-
-      // We can only get the folder name, not the full path (browser security)
-      const folderName = dirHandle.name;
-
-      // Try to construct a likely path based on common patterns
-      const customPathInput = $('custom-download-path');
-      if (customPathInput) {
-        // Show prompt with folder name to help user complete the path
-        const currentValue = customPathInput.value || '';
-
-        // If there's already a path, try to append or suggest
-        if (currentValue) {
-          const confirmAppend = confirm(`Selected folder: "${folderName}"\n\nAppend to current path?\n${currentValue}/${folderName}`);
-          if (confirmAppend) {
-            customPathInput.value = `${currentValue.replace(/\/$/, '')}/${folderName}`;
-          }
-        } else {
-          // Suggest common base paths for Mac
-          const suggestedPath = prompt(
-            `Selected folder: "${folderName}"\n\nBrowser security prevents getting the full path.\n\nEnter the complete path to this folder:`,
-            `/Users/${folderName}`
-          );
-          if (suggestedPath) {
-            customPathInput.value = suggestedPath;
-          }
-        }
-      }
-
-    } catch (error) {
-      // User cancelled or error
-      if (error.name !== 'AbortError') {
-        console.error('Folder picker error:', error);
-        alert('Could not open folder picker.\n\nTo get the path manually:\n1. Open Finder\n2. Navigate to your target folder\n3. Press Option+Cmd+C to copy the path\n4. Paste it in the input field');
-      }
-    }
-  });
+function normalizeDownloadSubfolder(value) {
+  const normalized = value.trim().replace(/^['"]|['"]$/g, '').replace(/\\/g, '/');
+  if (
+    !normalized ||
+    normalized.startsWith('/') ||
+    normalized.startsWith('~') ||
+    /^[A-Za-z]:\//.test(normalized) ||
+    normalized.split('/').includes('..')
+  ) {
+    return 'Obsidian-Clips';
+  }
+  return normalized.replace(/^\/+|\/+$/g, '') || 'Obsidian-Clips';
 }
 
 // Save button
@@ -307,18 +267,20 @@ if (saveCustomPathBtn) {
     const customPathInput = $('custom-download-path');
     if (!customPathInput) return;
 
-    const newPath = customPathInput.value.trim();
+    const newPath = normalizeDownloadSubfolder(customPathInput.value);
+    customPathInput.value = newPath;
 
     chrome.storage.local.get(['settings'], (result) => {
       const settings = result.settings || {};
-      settings.customDownloadPath = newPath;
+      settings.saveLocation = newPath;
+      settings.customDownloadPath = '';
+      settings.actualDownloadPath = null;
 
-      // Also update clipperDownloadPath for sync script
       chrome.storage.local.set({
         settings,
-        clipperDownloadPath: newPath || null
+        clipperDownloadPath: null
       }, () => {
-        console.log('Custom download path saved:', newPath);
+        console.log('Download subfolder saved:', newPath);
 
         // Show confirmation
         const btn = $('save-custom-path');
@@ -341,18 +303,20 @@ if (clearCustomPathBtn) {
   clearCustomPathBtn.addEventListener('click', () => {
     const customPathInput = $('custom-download-path');
     if (customPathInput) {
-      customPathInput.value = '';
+      customPathInput.value = 'Obsidian-Clips';
     }
 
     chrome.storage.local.get(['settings'], (result) => {
       const settings = result.settings || {};
+      settings.saveLocation = 'Obsidian-Clips';
       settings.customDownloadPath = '';
+      settings.actualDownloadPath = null;
 
       chrome.storage.local.set({
         settings,
         clipperDownloadPath: null
       }, () => {
-        console.log('Custom download path cleared');
+        console.log('Download subfolder reset');
 
         // Show confirmation
         const btn = $('clear-custom-path');

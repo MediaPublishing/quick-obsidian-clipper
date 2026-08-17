@@ -17,7 +17,7 @@ Unlike other web clippers that require complex OAuth setups or paid subscription
 - **Offline-capable** - Downloads to your filesystem, not to a cloud service
 - **Clean markdown output** - YAML frontmatter, proper formatting, ready for Obsidian
 - **Smart duplicate detection** - Alerts you if you've already clipped a page
-- **Custom download path** - Configure where clips are saved
+- **Download subfolder** - Choose a safe subfolder below the browser's Downloads directory
 
 ## Features
 
@@ -31,7 +31,7 @@ Unlike other web clippers that require complex OAuth setups or paid subscription
 - **Clipped Badge Indicator** - Green checkmark shows when you've already clipped a page
 - **Duplicate Detection** - Warns before re-clipping recently saved pages
 - **URL Normalization** - Strips tracking parameters (UTM, fbclid, etc.) for accurate duplicate detection
-- **Custom Download Path** - Configure exactly where clips are saved
+- **Download Subfolder** - Configure a relative folder below the browser's Downloads directory
 
 ### Site-Specific Handlers
 - **YouTube** - Extracts video metadata, description, and transcript when available
@@ -72,7 +72,7 @@ Unlike other web clippers that require complex OAuth setups or paid subscription
 ### First-time setup
 
 1. Open the extension **Options** page
-2. Choose your download folder, or keep the default `Downloads/Obsidian-Clips/`
+2. Choose a download subfolder, or keep the default `Downloads/Obsidian-Clips/`
 3. Clip any page to test that markdown files land where you expect
 
 ### Keyboard Shortcuts
@@ -89,9 +89,9 @@ Right-click the extension icon and select **Options** to configure:
 
 ### Download Path
 - **Default**: Saves to `Downloads/Obsidian-Clips/`
-- **Custom Path**: Specify your own path (e.g., `/Users/you/Obsidian/Vault/Clippings`)
+- **Download Subfolder**: Specify a relative folder such as `Obsidian-Clips/X-Bookmarks`.
 
-> **Tip for Mac users**: In Finder, navigate to your target folder, then press `Option+Cmd+C` to copy the full path.
+> Browser extensions cannot write to arbitrary absolute paths. Use a local sync process or a folder-sync tool to move files from this subfolder into your Obsidian vault.
 
 ### Features
 - **Clipped Badge** - Show green checkmark on pages you've clipped
@@ -142,14 +142,11 @@ tags:
 
 ## Syncing to Obsidian
 
-### Option 1: Direct Download Path
-Configure your custom download path to point directly to a folder inside your Obsidian vault:
-```
-/Users/you/Documents/Obsidian/Vault/Clippings
-```
+### Option 1: Folder Sync
+Configure a local sync process to move files from `Downloads/Obsidian-Clips/` into your vault. Internal X bookmark tracking remains valid after files move.
 
-### Option 2: Folder Sync
-If your vault is in a cloud-synced location (iCloud, Dropbox, Google Drive), clips will automatically sync.
+### Option 2: Cloud Folder Sync
+If the destination folder is cloud-synced (iCloud, Dropbox, Google Drive), sync the files after the local move.
 
 ### Option 3: Manual Move
 Files are saved to `Downloads/Obsidian-Clips/` - move them to your vault as needed.

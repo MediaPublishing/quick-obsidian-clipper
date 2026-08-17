@@ -404,21 +404,18 @@
         </div>
 
         <div class="data-row">
-          <div class="data-label">Custom Path</div>
+          <div class="data-label">Download Subfolder</div>
           <div style="width: 100%;">
             <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-              <input type="text" id="custom-download-path" placeholder="/Users/.../Vault/Clippings"
+              <input type="text" id="custom-download-path" placeholder="Obsidian-Clips"
                      style="flex: 1; padding: 10px 14px; border: 2px solid var(--border); border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 13px;">
-              <button id="browse-path" class="btn btn-secondary" style="padding: 8px 16px; font-size: 12px; white-space: nowrap;">
-                <span>📁 Browse</span>
-              </button>
             </div>
             <div style="display: flex; gap: 8px;">
               <button id="save-custom-path" class="btn btn-primary" style="padding: 8px 16px; font-size: 12px;">
-                <span>Save Path</span>
+                <span>Save Folder</span>
               </button>
               <button id="clear-custom-path" class="btn btn-secondary" style="padding: 8px 16px; font-size: 12px;">
-                <span>Clear</span>
+                <span>Reset</span>
               </button>
             </div>
           </div>
@@ -445,9 +442,9 @@
         </div>
 
         <div class="help-text">
-          <strong>Custom Path:</strong> Enter the full path to your Obsidian vault's Clippings folder.<br><br>
-          <strong>Easy way to get the path:</strong> In Finder, navigate to the folder, then press <code>Option+Cmd+C</code> to copy the path, then paste here.<br><br>
-          Mac aliases are supported. Leave empty to use Chrome's default Downloads folder.
+          Enter a folder relative to the browser's download directory, for example
+          <code>Obsidian-Clips</code>. Absolute paths are not supported by browser
+          extensions. The local sync moves new clips from this folder into the Vault.
         </div>
       </div>
 
