@@ -223,6 +223,11 @@ cd quick-obsidian-clipper
 
 ## Changelog
 
+### v2.4.15 (2026-08-18)
+- Prevented `chrome://`, extension, `about:`, `file://`, and other non-web pages from reaching script injection.
+- Added a clear notification for browser-internal pages instead of the `Cannot access a chrome:// URL` console error.
+- Applied the same guard to the action button, context menu, selection shortcut, and bulk-tab filtering.
+
 ### v2.4.14 (2026-08-18)
 - Clarified X-Bookmark Sync labels and counter definitions.
 - Added live sync progress refresh and a one-click download-folder action.

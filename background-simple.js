@@ -2,6 +2,8 @@
 // Phase 1 MVP: Downloads folder + history tracking
 // Phase 2: Advanced features + rate limiting
 
+import { getClippablePageError, isClippablePage } from './src/url-guards.js';
+
 console.log('Quick Obsidian Clipper - Background script loaded');
 
 // Import rate limiter utility (will be injected dynamically)
@@ -1649,7 +1651,14 @@ function escapeQuotes(str) {
 
 // Handle extension icon click
 chrome.action.onClicked.addListener(async (tab) => {
-  console.log('Extension icon clicked on:', tab.url);
+  console.log('Extension icon clicked on:', tab?.url);
+
+  const pageError = getClippablePageError(tab?.url);
+  if (pageError) {
+    console.warn('Cannot clip active page:', pageError, tab?.url);
+    showNotification('Cannot clip this page', pageError, 'icons/icon48.png');
+    return;
+  }
 
   const settings = await getSettings();
 
@@ -1765,6 +1774,12 @@ async function openPerplexityPopup(pageUrl, pageTitle) {
 
 // Helper: Inject content script
 async function injectContentScript(tabId) {
+  const tab = await chrome.tabs.get(tabId);
+  const pageError = getClippablePageError(tab?.url);
+  if (pageError) {
+    throw new Error(pageError);
+  }
+
   await chrome.scripting.executeScript({
     target: { tabId },
     files: ['content.js']
@@ -3435,6 +3450,12 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 
     if (info.menuItemId === 'clip-page') {
       // Clip full page (same as extension icon)
+      const pageError = getClippablePageError(tab.url);
+      if (pageError) {
+        showNotification('Cannot clip this page', pageError, 'icons/icon48.png');
+        return;
+      }
+
       const settings = await getSettings();
 
       if (settings.autoArchive && shouldArchive(tab.url)) {
@@ -3448,6 +3469,12 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
       }
     } else if (info.menuItemId === 'clip-selection') {
       // Clip selected text
+      const pageError = getClippablePageError(tab.url);
+      if (pageError) {
+        showNotification('Cannot clip this page', pageError, 'icons/icon48.png');
+        return;
+      }
+
       await clipSelection(tab.id, info.selectionText);
     } else if (info.menuItemId === 'clip-link') {
       // Clip linked page
@@ -3472,6 +3499,12 @@ chrome.commands.onCommand.addListener(async (command) => {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
   if (command === 'clip-selection') {
+    const pageError = getClippablePageError(tab?.url);
+    if (pageError) {
+      showNotification('Cannot clip this page', pageError, 'icons/icon48.png');
+      return;
+    }
+
     // Get selected text via content script
     const result = await chrome.scripting.executeScript({
       target: { tabId: tab.id },
@@ -3497,6 +3530,10 @@ async function clipSelection(tabId, selectionText) {
 
   // Get page info
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  const pageError = getClippablePageError(tab?.url);
+  if (pageError) {
+    throw new Error(pageError);
+  }
 
   const clipData = {
     title: `Selection from ${tab.title}`,
@@ -3655,11 +3692,8 @@ async function handleBulkClipTabs(windowId) {
       console.log('Skipping tab without URL');
       return false;
     }
-    // Skip chrome:// URLs, extension pages, new tab pages
-    if (tab.url.startsWith('chrome://') ||
-        tab.url.startsWith('chrome-extension://') ||
-        tab.url.startsWith('about:') ||
-        tab.url === 'chrome://newtab/') {
+    // Skip browser-internal and non-web pages
+    if (!isClippablePage(tab.url)) {
       console.log('Skipping invalid tab:', tab.url);
       return false;
     }
