@@ -112,6 +112,14 @@
       .grid {
         grid-template-columns: 1fr;
       }
+
+      .stats.health-stats {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .sync-actions {
+        flex-direction: column;
+      }
     }
 
     /* Section */
@@ -238,6 +246,11 @@
       gap: 24px;
     }
 
+    .stats.health-stats {
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
     .stat {
       text-align: center;
       padding: 20px;
@@ -266,6 +279,51 @@
       text-transform: uppercase;
       letter-spacing: 0.05em;
       color: var(--gray-500);
+    }
+
+    .stat-note {
+      margin-top: 6px;
+      font-size: 11px;
+      color: var(--gray-500);
+    }
+
+    .sync-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid var(--gray-200);
+      position: sticky;
+      bottom: 12px;
+      z-index: 2;
+      background: var(--white);
+    }
+
+    .sync-actions .btn {
+      padding: 12px 16px;
+      font-size: 12px;
+    }
+
+    .path-action {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+      padding: 8px 12px;
+      border: 1px solid var(--black);
+      background: var(--white);
+      color: var(--black);
+      font: 500 12px 'IBM Plex Sans', sans-serif;
+      cursor: pointer;
+    }
+
+    .path-action:hover:not(:disabled) {
+      background: var(--gray-100);
+    }
+
+    .path-action:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
     }
 
     /* Buttons */
@@ -428,7 +486,12 @@
 
         <div class="data-row">
           <div class="data-label">Detected</div>
-          <div class="data-value loading" id="actual-path">Awaiting first clip...</div>
+          <div>
+            <div class="data-value loading" id="actual-path">Awaiting first clip...</div>
+            <button class="path-action" id="show-download-location" type="button" disabled>
+              <span>↗</span><span>Open download folder</span>
+            </button>
+          </div>
         </div>
 
         <div class="data-row">
@@ -451,27 +514,54 @@
       <!-- Statistics Section -->
       <div class="section">
         <div class="section-header">
-          <h2 class="section-title">Statistics</h2>
+          <h2 class="section-title">Overview &amp; Health</h2>
         </div>
 
-        <div class="stats">
+        <div class="stats health-stats">
           <div class="stat">
             <div class="stat-value loading" id="total-clips">0</div>
-            <div class="stat-label">Total</div>
+            <div class="stat-label">All clips</div>
+            <div class="stat-note">all time</div>
           </div>
           <div class="stat">
-            <div class="stat-value loading" id="successful-clips">0</div>
-            <div class="stat-label">Success</div>
+            <div class="stat-value loading" id="clips-7d">0</div>
+            <div class="stat-label">Last 7 days</div>
+            <div class="stat-note">recent activity</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value loading" id="success-rate">0%</div>
+            <div class="stat-label">Success rate</div>
+            <div class="stat-note">completed clips</div>
           </div>
           <div class="stat">
             <div class="stat-value loading" id="failed-clips">0</div>
             <div class="stat-label">Failed</div>
+            <div class="stat-note">all time</div>
           </div>
         </div>
 
+        <div class="data-row">
+          <div class="data-label">Sync Status</div>
+          <div class="data-value loading" id="sync-status">Idle</div>
+        </div>
+
+        <div class="data-row">
+          <div class="data-label">Last Sync</div>
+          <div class="data-value loading" id="last-sync-overview">Never</div>
+        </div>
+
+        <div class="data-row">
+          <div class="data-label">Queue</div>
+          <div class="data-value loading" id="queue-state">Idle</div>
+        </div>
+
+        <div class="data-row">
+          <div class="data-label">Last Error</div>
+          <div class="data-value loading" id="last-error">None</div>
+        </div>
+
         <div class="help-text">
-          <strong>Auto-Sync:</strong> Files are automatically synced to your vault every 5 minutes via the background sync script.
-          Check <code>~/.claude/logs/clip-sync.log</code> for sync history.
+          <strong>Reading the numbers:</strong> All clips is the complete local history. Last 7 days is the recent window, not a second total. Success rate counts completed clips only.
         </div>
       </div>
       <!-- Phase 2 Features Section -->
@@ -584,7 +674,7 @@
         <div class="section-header">
           <h2 class="section-title">
             <span class="status-led" id="twitter-sync-led"></span>
-            Twitter Bookmark Sync
+            X-Bookmark Sync
           </h2>
         </div>
 
@@ -593,7 +683,7 @@
           <div>
             <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
               <input type="checkbox" id="enable-twitter-sync" style="width: 20px; height: 20px; cursor: pointer;">
-              <span style="font-weight: 500;">Enable automatic syncing</span>
+              <span style="font-weight: 500;">Enable automatic X bookmark syncing</span>
             </label>
           </div>
         </div>
@@ -616,39 +706,39 @@
         </div>
 
         <div class="data-row">
-          <div class="data-label">Total Synced</div>
+          <div class="data-label">Tracked Bookmarks</div>
           <div class="data-value loading" id="total-synced-count">0</div>
         </div>
 
         <div class="stats">
           <div class="stat">
             <div class="stat-value loading" id="bookmarks-found">0</div>
-            <div class="stat-label">Found</div>
+            <div class="stat-label">Current bookmarks</div>
+            <div class="stat-note">seen in X</div>
           </div>
           <div class="stat">
             <div class="stat-value loading" id="newly-synced">0</div>
-            <div class="stat-label">New</div>
+            <div class="stat-label">New this sync</div>
           </div>
           <div class="stat">
             <div class="stat-value loading" id="already-synced">0</div>
-            <div class="stat-label">Skipped</div>
+            <div class="stat-label">Already tracked</div>
           </div>
         </div>
 
         <div class="help-text">
-          <strong>How it works:</strong> The extension periodically checks your Twitter bookmarks and automatically clips any new bookmarked tweets. Already-synced tweets are tracked by ID and never re-clipped, even after files are moved to your vault.
+          <strong>How it works:</strong> X bookmarks are checked on the selected schedule. Current bookmarks is the number found in X, New this sync is what was added in the latest run, and Already tracked is what was skipped because its ID is already stored locally. Moving the Markdown files does not reset tracking.
+        </div>
+
+        <div class="sync-actions">
+          <button class="btn btn-primary" id="sync-twitter-now">
+            <span>↻ Run X-Bookmark Sync</span>
+          </button>
+          <button class="btn btn-secondary" id="reset-twitter-tracking">
+            <span>Reset X Sync History</span>
+          </button>
         </div>
       </div>
-    </div>
-
-    <!-- Twitter Sync Actions -->
-    <div class="actions">
-      <button class="btn btn-primary" id="sync-twitter-now">
-        <span>🔄 Sync Bookmarks Now</span>
-      </button>
-      <button class="btn btn-secondary" id="reset-twitter-tracking">
-        <span>🗑️ Reset Tracking</span>
-      </button>
     </div>
 
     <!-- Main Actions -->
@@ -673,7 +763,7 @@
 
     <footer>
       <div>Quick Obsidian Clipper</div>
-      <div class="version">v2.4.6 — Homepage Bookmark Toggle</div>
+      <div class="version">v2.4.14 — X-Bookmark Sync clarity</div>
     </footer>
   </div>
 

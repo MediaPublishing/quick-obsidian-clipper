@@ -136,6 +136,7 @@ const DEFAULT_SETTINGS = {
     'seekingalpha.com'
   ],
   actualDownloadPath: null,  // Will be detected on first download
+  lastDownloadId: null,
   twitterBookmarkSync: {
     enabled: false,
     autoSyncInterval: 30,  // Minutes
@@ -143,7 +144,8 @@ const DEFAULT_SETTINGS = {
     lastSyncTimestamp: null,
     totalBookmarksFound: 0,
     totalNewlySynced: 0,
-    syncInProgress: false
+    syncInProgress: false,
+    lastError: null
   }
 };
 
@@ -370,7 +372,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if (message.type === 'BOOKMARK_SCRAPE_PROGRESS') {
     console.log('Scrape progress:', message.data);
-    // Could update badge or send to options page
+    if (Number.isFinite(message.data?.tweetsFound)) {
+      updateSyncStatus({
+        totalBookmarksFound: message.data.tweetsFound,
+        syncInProgress: true
+      }).catch(error => console.warn('Could not persist scrape progress:', error));
+    }
     sendResponse({ success: true });
     return true;
   }
@@ -393,6 +400,27 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     resetTwitterSyncTracking()
       .then(() => sendResponse({ success: true }))
       .catch(error => sendResponse({ success: false, error: error.message }));
+    return true;
+  }
+
+  if (message.type === 'SHOW_DOWNLOAD_LOCATION') {
+    chrome.storage.local.get(['settings'], (result) => {
+      const downloadId = result.settings?.lastDownloadId;
+      if (!downloadId) {
+        chrome.downloads.showDefaultFolder();
+        sendResponse({ success: true, fallback: true });
+        return;
+      }
+
+      chrome.downloads.show(downloadId, () => {
+        if (chrome.runtime.lastError) {
+          chrome.downloads.showDefaultFolder();
+          sendResponse({ success: true, fallback: true });
+          return;
+        }
+        sendResponse({ success: true });
+      });
+    });
     return true;
   }
 
@@ -1244,6 +1272,12 @@ async function downloadFile(content, filename, folder) {
         reject(new Error(chrome.runtime.lastError.message));
       } else {
         console.log('Downloaded with ID:', downloadId);
+
+        chrome.storage.local.get(['settings'], (result) => {
+          const settings = result.settings || DEFAULT_SETTINGS;
+          settings.lastDownloadId = downloadId;
+          chrome.storage.local.set({ settings });
+        });
 
         // Wait a moment for Chrome to populate the download item, then get the path
         setTimeout(() => {
@@ -2802,6 +2836,10 @@ async function runTwitterBookmarkQueueSync(progress, { resumed = false } = {}) {
           text: `${absoluteCurrent}/${totalQueued}`
         });
         chrome.action.setBadgeBackgroundColor({ color: '#1DA1F2' });
+        updateSyncStatus({
+          totalNewlySynced: p.success,
+          lastError: p.failed ? `${p.failed} bookmark${p.failed === 1 ? '' : 's'} failed` : null
+        }).catch(error => console.warn('Could not persist queue progress:', error));
       },
       continueOnError: true
     }
