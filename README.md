@@ -223,6 +223,11 @@ cd quick-obsidian-clipper
 
 ## Changelog
 
+### v2.4.14 (2026-08-18)
+- Clarified X-Bookmark Sync labels and counter definitions.
+- Added live sync progress refresh and a one-click download-folder action.
+- Added overview health metrics with explicit all-time and seven-day windows.
+
 ### v2.4.6 (2026-01-14)
 - Added a toggle to treat homepages as bookmark-only clips
 - Default behavior now keeps full-page content unless toggled

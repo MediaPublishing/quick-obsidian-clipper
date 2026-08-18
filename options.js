@@ -8,7 +8,7 @@ function loadData() {
   chrome.storage.local.get(['settings', 'clippingHistory', 'clipperDownloadPath'], (result) => {
     const settings = result.settings || {};
     const history = result.clippingHistory || [];
-    const detectedPath = result.clipperDownloadPath;
+    const detectedPath = settings.actualDownloadPath || result.clipperDownloadPath;
 
     // Remove loading state
     document.querySelectorAll('.loading').forEach(el => {
@@ -30,9 +30,11 @@ function loadData() {
     const statusLed = $('status-led');
     const pathStatus = $('path-status');
     const actualPath = $('actual-path');
+    const showDownloadLocation = $('show-download-location');
 
     if (detectedPath) {
       if (actualPath) actualPath.textContent = detectedPath;
+      if (showDownloadLocation) showDownloadLocation.disabled = false;
       if (statusLed) {
         statusLed.classList.add('active');
         statusLed.classList.remove('inactive');
@@ -44,6 +46,7 @@ function loadData() {
       }
     } else {
       if (actualPath) actualPath.textContent = 'Not detected — clip something first';
+      if (showDownloadLocation) showDownloadLocation.disabled = false;
       if (statusLed) {
         statusLed.classList.add('inactive');
         statusLed.classList.remove('active');
@@ -58,14 +61,40 @@ function loadData() {
     // Calculate statistics
     const successful = history.filter(c => c.status === 'success').length;
     const failed = history.filter(c => c.status === 'failed').length;
+    const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+    const recentClips = history.filter((clip) => {
+      const timestamp = Date.parse(clip.timestamp || clip.date || clip.createdAt || '');
+      return Number.isFinite(timestamp) && timestamp >= sevenDaysAgo;
+    }).length;
+    const attempts = successful + failed;
 
     const totalClipsEl = $('total-clips');
-    const successfulClipsEl = $('successful-clips');
+    const clips7dEl = $('clips-7d');
+    const successRateEl = $('success-rate');
     const failedClipsEl = $('failed-clips');
 
     if (totalClipsEl) totalClipsEl.textContent = history.length;
-    if (successfulClipsEl) successfulClipsEl.textContent = successful;
+    if (clips7dEl) clips7dEl.textContent = recentClips;
+    if (successRateEl) successRateEl.textContent = attempts ? `${Math.round((successful / attempts) * 100)}%` : '0%';
     if (failedClipsEl) failedClipsEl.textContent = failed;
+
+    const syncSettings = settings.twitterBookmarkSync || {};
+    const syncStatus = $('sync-status');
+    const lastSyncOverview = $('last-sync-overview');
+    const queueState = $('queue-state');
+    const lastError = $('last-error');
+    const formatTime = (value) => value ? new Date(value).toLocaleString() : 'Never';
+    if (syncStatus) syncStatus.textContent = syncSettings.syncInProgress ? 'Running' : (syncSettings.enabled ? `Enabled · every ${syncSettings.autoSyncInterval || 30} min` : 'Disabled');
+    if (lastSyncOverview) lastSyncOverview.textContent = formatTime(syncSettings.lastSyncTimestamp);
+    if (queueState) queueState.textContent = syncSettings.syncInProgress ? 'Processing bookmarks' : 'Idle';
+    if (lastError) lastError.textContent = syncSettings.lastError || 'None';
+  });
+}
+
+const showDownloadLocationBtn = $('show-download-location');
+if (showDownloadLocationBtn) {
+  showDownloadLocationBtn.addEventListener('click', () => {
+    chrome.runtime.sendMessage({ type: 'SHOW_DOWNLOAD_LOCATION' });
   });
 }
 
@@ -96,7 +125,7 @@ if (refreshStatsBtn) {
 // Initial load
 loadData();
 
-// Auto-refresh every 5 seconds
+// Auto-refresh the general overview and sync counters without a manual refresh.
 setInterval(loadData, 5000);
 
 // ===== TWITTER BOOKMARK SYNC HANDLERS =====
@@ -123,7 +152,10 @@ function loadTwitterSyncData() {
     // Update LED status
     const twitterSyncLed = $('twitter-sync-led');
     if (twitterSyncLed) {
-      if (syncSettings.enabled) {
+      if (syncSettings.syncInProgress) {
+        twitterSyncLed.classList.add('active');
+        twitterSyncLed.classList.remove('inactive');
+      } else if (syncSettings.enabled) {
         twitterSyncLed.classList.add('active');
         twitterSyncLed.classList.remove('inactive');
       } else {
@@ -158,6 +190,9 @@ function loadTwitterSyncData() {
       const alreadySynced = (syncSettings.totalBookmarksFound || 0) - (syncSettings.totalNewlySynced || 0);
       alreadySyncedEl.textContent = Math.max(0, alreadySynced);
     }
+
+    const syncTwitterNowBtn = $('sync-twitter-now');
+    if (syncTwitterNowBtn) syncTwitterNowBtn.disabled = Boolean(syncSettings.syncInProgress);
   });
 }
 
@@ -199,7 +234,7 @@ if (syncTwitterNowBtn) {
     if (!btn) return;
 
     const spanEl = btn.querySelector('span');
-    const originalText = spanEl ? spanEl.textContent : 'Sync Now';
+    const originalText = spanEl ? spanEl.textContent : 'Run X-Bookmark Sync';
 
     // Show loading state
     if (spanEl) spanEl.textContent = '⏳ Syncing...';
@@ -229,7 +264,7 @@ if (syncTwitterNowBtn) {
 const resetTrackingBtn = $('reset-twitter-tracking');
 if (resetTrackingBtn) {
   resetTrackingBtn.addEventListener('click', () => {
-    if (confirm('Are you sure you want to reset Twitter bookmark sync tracking? This will allow previously synced tweets to be synced again.')) {
+    if (confirm('Are you sure you want to reset X bookmark sync tracking? This will allow previously synced tweets to be synced again.')) {
       chrome.runtime.sendMessage({
         type: 'RESET_TWITTER_SYNC_TRACKING'
       }, (response) => {
@@ -243,6 +278,10 @@ if (resetTrackingBtn) {
 
 // Initial load of Twitter sync data
 loadTwitterSyncData();
+setInterval(loadTwitterSyncData, 2000);
+chrome.storage.onChanged.addListener((changes, areaName) => {
+  if (areaName === 'local' && changes.settings) loadTwitterSyncData();
+});
 
 // ===== CUSTOM DOWNLOAD PATH HANDLER =====
 
