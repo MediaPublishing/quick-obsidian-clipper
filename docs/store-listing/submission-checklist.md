@@ -127,9 +127,10 @@ Begründung:
 
 - Version: `2.4.16`
 - ZIP: `dist/quick-obsidian-clipper-v2.4.16-chrome-store.zip`
-- SHA-256: `1b6cac2673d01650792a72856d77c88a6e8ffc1bdd9a735b436fb0ccd9f56fb5`
+- SHA-256: `cca97938d417e8f7eb683c7803fe3a50d010bfe41427621802f88dfcaaf4fbb0`
 - Inhalt: 32 Laufzeitdateien; keine `.git`-, `docs`-, `archive`-, `scripts`- oder `.DS_Store`-Einträge.
 - Checks: Manifest-JSON gültig, JavaScript-Syntaxchecks, URL-Guard-Tests, X-Sync-Scraper-Fallbacktest und ZIP-Integritätstest.
+- Visual QA: Optionsseite wurde in Chromium mit geladener Extension unter `v2.4.16` geöffnet; Screenshot und Promo-Tile wurden daraus erzeugt.
 - Listing-Metadaten: `docs/store-listing/submission-metadata.md`
 
 ---
