@@ -1,11 +1,11 @@
 ---
-date: 2026-06-11
-status: draft
+date: 2026-08-23
+status: ready-for-owner-review
 ---
 
 # Quick Obsidian Clipper — Submission Checklist
 
-> DRAFT — Kein Upload, kein Publish. Alle Punkte müssen manuell bestätigt werden.
+> Kein automatischer Upload, kein Publish ohne Owner-Freigabe. Die technischen Vorbereitungen sind abgeschlossen.
 
 ---
 

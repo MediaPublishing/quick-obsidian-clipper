@@ -1,11 +1,11 @@
 ---
-date: 2026-06-11
-status: draft
+date: 2026-08-23
+status: ready-for-submission
 lang: en
-version: 2.4.11
+version: 2.4.15
 ---
 
-# Quick Obsidian Clipper — Store Description (English, DRAFT)
+# Quick Obsidian Clipper — Store Description (English)
 
 ## Short Description (132 chars max)
 

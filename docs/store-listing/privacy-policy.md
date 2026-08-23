@@ -1,12 +1,12 @@
 ---
-date: 2026-06-11
-status: draft
-version: 2.4.11
+date: 2026-08-23
+status: published-on-github-pages
+version: 2.4.15
 ---
 
 # Quick Obsidian Clipper — Privacy Policy (DRAFT)
 
-*Last updated: 2026-06-11*
+*Last updated: 2026-08-23*
 
 ---
 
