@@ -1,6 +1,6 @@
 ---
 date: 2026-08-23
-status: ready-for-owner-review
+status: blocked-on-owner-store-account
 ---
 
 # Quick Obsidian Clipper — Submission Checklist
@@ -20,9 +20,9 @@ status: ready-for-owner-review
 **Zu tun:**
 1. In der Store-Listing-Beschreibung explizit erklären, warum `<all_urls>` nötig ist (bereits in `description-en.md` und `privacy-policy.md` enthalten).
 2. Im "Single Purpose"-Feld des Store-Formulars den Zweck klar benennen: "Clips any web page to Markdown files in the user's local Downloads folder."
-3. Überprüfen, ob `web_accessible_resources` auf `<all_urls>` eingeschränkt werden kann (aktuell offen) — reduziert Angriffsfläche und zeigt Store-Reviewer gute Praxis.
+3. `web_accessible_resources` wurde entfernt. Die injizierten Skripte werden über `chrome.scripting.executeScript` geladen und müssen Webseiten nicht direkt erreichbar sein.
 
-**Status:** OFFENE PRÜFUNG — Listing-Text justiert, technische Review der `web_accessible_resources` empfohlen
+**Status:** ERLEDIGT
 
 ---
 
@@ -32,9 +32,10 @@ status: ready-for-owner-review
 
 **Zu tun:**
 1. Privacy Policy auf einer öffentlichen URL hosten (GitHub Pages über öffentliches Repo, eigene Domain, oder ein anderer statischer Host).
-2. URL im Chrome-Web-Store-Entwicklerprofil eintragen.
+2. URL im Chrome-Web-Store-Entwicklerprofil eintragen:
+   https://mediapublishing.github.io/quick-obsidian-clipper/store-listing/privacy-policy.html
 
-**Status:** OFFEN
+**Status:** ERLEDIGT — öffentliche Seite wurde per HTTP 200 und Titelprüfung verifiziert.
 
 ---
 
@@ -43,10 +44,10 @@ status: ready-for-owner-review
 **Was unklar ist:** Laut OPEN-LOOPS-Dokument war ein "Webhook-Server-Test" der letzte offene Schritt. Im Code (`background-simple.js`, `content.js`) ist kein aktiver Webhook-Server-Aufruf sichtbar. Die `web_accessible_resources`-Sektion im Manifest exponiert `src/handlers/*.js` — diese Handler müssen einzeln geprüft werden.
 
 **Zu tun:**
-1. `ls /Users/MediaPublishing/Projects/quick-obsidian-clipper/src/handlers/` ausführen und alle Handler-Dateien prüfen.
-2. Verifizieren, dass kein Handler eine externe Server-URL aufruft (nur lokale Downloads und optionale user-initiated Weiterleitungen zu archive.ph/freedium sind erlaubt).
+1. Alle Handler-Dateien wurden geprüft.
+2. Externe Aufrufe betreffen nur die optionalen, nutzerinitiierten Archive-/Freedium-Routen sowie YouTube-DOM-Zugriffe. Es gibt keine versteckte Telemetrie oder Server-Synchronisation.
 
-**Status:** PRÜFUNG AUSSTEHEND
+**Status:** ERLEDIGT
 
 ---
 
@@ -85,10 +86,9 @@ Begründung:
 - [x] Manifest Version 3 (`manifest_version: 3`)
 - [x] `background.service_worker` + `type: module`
 - [x] `content_security_policy` gesetzt (strikte Inline-Script-Policy)
-- [x] `web_accessible_resources` auf spezifische Dateien beschränkt (nicht `*`)
-- [ ] `web_accessible_resources` `matches: ["<all_urls>"]` — kann auf spezifische Seiten eingeschränkt werden? PRÜFEN
+- [x] `web_accessible_resources` entfernt; injizierte Skripte benötigen diese Freigabe nicht.
 - [x] Tastatur-Shortcuts definiert (3 Commands)
-- [ ] Alle Icons vorhanden und geprüft (16, 32, 48, 128 px) — AUSSTEHEND
+- [x] Alle Icons vorhanden und geprüft (16, 32, 48, 128 px)
 
 ---
 
@@ -99,31 +99,41 @@ Begründung:
 - [x] Kurzbeschreibung (DE) geschrieben — `description-de.md`
 - [x] Langbeschreibung (DE) geschrieben — `description-de.md`
 - [x] Privacy Policy (Markdown) geschrieben — `privacy-policy.md`
-- [ ] Privacy Policy öffentlich hosted — OFFEN (P0-2)
+- [x] Privacy Policy öffentlich hosted — `https://mediapublishing.github.io/quick-obsidian-clipper/store-listing/privacy-policy.html`
 - [x] Screenshot-Konzept (5 Motive) — `screenshots-konzept.md`
-- [ ] Screenshots produziert — OFFEN
+- [x] Screenshot produziert — `docs/store-listing/assets/screenshot-01-options-1280x800.png`
 - [ ] Promotional Tile (440×280) — OPTIONAL, OFFEN
 
 ---
 
 ## Pre-Upload-Checkliste
 
-- [ ] P0-1 (all_urls Begründung + web_accessible_resources Review)
-- [ ] P0-2 (Privacy Policy URL live)
-- [ ] P0-3 (Handlers geprüft — kein externer Aufruf ohne User-Aktion)
+- [x] P0-1 (`<all_urls>` begründet; `web_accessible_resources` entfernt)
+- [x] P0-2 (Privacy Policy URL live; HTTP 200 und Inhalt verifiziert)
+- [x] P0-3 (Handler geprüft — keine versteckten externen Aufrufe)
 - [ ] P0-4 (E2E-Test bestanden)
 - [ ] Store-Entwicklerprofil angelegt ($5 Registrierungsgebühr)
 - [ ] Privacy Policy URL im Profil eingetragen
-- [ ] Extension ZIP erstellt (`zip -r quick-obsidian-clipper.zip . --exclude "*.git*" --exclude "docs/*" --exclude "archive/*" --exclude "scripts/*"`)
-- [ ] ZIP-Inhalt geprüft (kein .git, kein docs/, keine Backup-Dateien)
+- [x] Extension ZIP erstellt mit `scripts/build-store-package.sh`.
+- [x] ZIP-Inhalt geprüft (kein `.git`, kein `docs/`, keine Backup-Dateien).
 - [ ] Listing-Text (EN) eingetragen
 - [ ] Screenshots hochgeladen
 - [ ] Store-interne Überprüfung abgewartet
 
 ---
 
+## Build-Beleg 2026-08-23
+
+- Version: `2.4.16`
+- ZIP: `dist/quick-obsidian-clipper-v2.4.16-chrome-store.zip`
+- SHA-256: `1b6cac2673d01650792a72856d77c88a6e8ffc1bdd9a735b436fb0ccd9f56fb5`
+- Inhalt: 32 Laufzeitdateien; keine `.git`-, `docs`-, `archive`-, `scripts`- oder `.DS_Store`-Einträge.
+- Checks: Manifest-JSON gültig, JavaScript-Syntaxchecks, URL-Guard-Tests, X-Sync-Scraper-Fallbacktest und ZIP-Integritätstest.
+
+---
+
 ## Was NICHT getan werden darf (vor explizitem GO)
 
-- Kein Upload auf den Chrome Web Store
+- Kein Upload auf den Chrome Web Store ohne Developer-Account und Owner-Freigabe
 - Kein GitHub Release
 - Kein öffentliches Publizieren des privaten Repos (falls noch private)

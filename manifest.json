@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Quick Obsidian Clipper",
-  "version": "2.4.15",
+  "version": "2.4.16",
   "description": "One-click web clipper with smart features - saves to Downloads, syncs to Obsidian",
   "permissions": [
     "storage",
@@ -62,14 +62,5 @@
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'"
   },
-  "web_accessible_resources": [
-    {
-      "resources": [
-        "content.js",
-        "perplexity-content.js",
-        "src/handlers/*.js"
-      ],
-      "matches": ["<all_urls>"]
-    }
-  ]
+  "web_accessible_resources": []
 }

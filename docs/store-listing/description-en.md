@@ -2,7 +2,7 @@
 date: 2026-08-23
 status: ready-for-submission
 lang: en
-version: 2.4.15
+version: 2.4.16
 ---
 
 # Quick Obsidian Clipper — Store Description (English)
