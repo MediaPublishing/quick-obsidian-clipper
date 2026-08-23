@@ -102,7 +102,7 @@ Begründung:
 - [x] Privacy Policy öffentlich hosted — `https://mediapublishing.github.io/quick-obsidian-clipper/store-listing/privacy-policy.html`
 - [x] Screenshot-Konzept (5 Motive) — `screenshots-konzept.md`
 - [x] Screenshot produziert — `docs/store-listing/assets/screenshot-01-options-1280x800.png`
-- [ ] Promotional Tile (440×280) — OPTIONAL, OFFEN
+- [x] Promotional Tile produziert — `docs/store-listing/assets/promo-tile-440x280.png`
 
 ---
 
@@ -116,6 +116,7 @@ Begründung:
 - [ ] Privacy Policy URL im Profil eingetragen
 - [x] Extension ZIP erstellt mit `scripts/build-store-package.sh`.
 - [x] ZIP-Inhalt geprüft (kein `.git`, kein `docs/`, keine Backup-Dateien).
+- [x] Store-Metadaten, Berechtigungs-Begründungen und Datenschutz-Angaben vorbereitet.
 - [ ] Listing-Text (EN) eingetragen
 - [ ] Screenshots hochgeladen
 - [ ] Store-interne Überprüfung abgewartet
@@ -129,6 +130,7 @@ Begründung:
 - SHA-256: `1b6cac2673d01650792a72856d77c88a6e8ffc1bdd9a735b436fb0ccd9f56fb5`
 - Inhalt: 32 Laufzeitdateien; keine `.git`-, `docs`-, `archive`-, `scripts`- oder `.DS_Store`-Einträge.
 - Checks: Manifest-JSON gültig, JavaScript-Syntaxchecks, URL-Guard-Tests, X-Sync-Scraper-Fallbacktest und ZIP-Integritätstest.
+- Listing-Metadaten: `docs/store-listing/submission-metadata.md`
 
 ---
 
