@@ -4,7 +4,7 @@ status: published-on-github-pages
 version: 2.4.15
 ---
 
-# Quick Obsidian Clipper — Privacy Policy (DRAFT)
+# Quick Obsidian Clipper — Privacy Policy
 
 *Last updated: 2026-08-23*
 
