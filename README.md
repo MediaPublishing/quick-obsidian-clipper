@@ -2,6 +2,8 @@
 
 **One-click web clipper with smart features** - Saves pages as clean markdown to your Downloads folder, ready for Obsidian.
 
+Landing page: <https://quick-obsidian-clipper.pages.dev>
+
 [![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-blue?logo=googlechrome)](https://developer.chrome.com/docs/extensions/)
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-green)](https://developer.chrome.com/docs/extensions/mv3/intro/)
 

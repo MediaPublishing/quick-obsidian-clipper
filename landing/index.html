@@ -1,0 +1,817 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Quick Obsidian Clipper - Save web pages as clean Markdown</title>
+  <meta name="description" content="Quick Obsidian Clipper turns any page into clean local Markdown with YAML frontmatter, duplicate detection, bulk clipping and optional X bookmark sync." />
+  <link rel="canonical" href="https://quick-obsidian-clipper.pages.dev/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Quick Obsidian Clipper" />
+  <meta property="og:title" content="Quick Obsidian Clipper" />
+  <meta property="og:description" content="Save web pages as clean local Markdown for Obsidian without an account or cloud service." />
+  <meta property="og:url" content="https://quick-obsidian-clipper.pages.dev/" />
+  <meta property="og:image" content="https://quick-obsidian-clipper.pages.dev/assets/options-dashboard.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: oklch(18% 0.022 265);
+      --surface: oklch(23% 0.032 270);
+      --surface-strong: oklch(27% 0.042 274);
+      --stroke: oklch(72% 0.08 285 / .24);
+      --text: oklch(96% 0.009 290);
+      --muted: oklch(80% 0.025 285);
+      --accent: oklch(64% 0.17 291);
+      --accent-2: oklch(81% 0.12 220);
+      --ok: oklch(82% 0.15 155);
+      --radius-xl: 24px;
+      --radius-lg: 18px;
+      --shadow: 0 30px 70px oklch(12% 0.03 270 / .55);
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      scroll-behavior: smooth;
+      scroll-padding-top: 100px;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Source Sans 3", system-ui, sans-serif;
+      line-height: 1.55;
+      color: var(--text);
+      background:
+        radial-gradient(760px 520px at 6% -8%, oklch(58% .17 292 / .32), transparent 68%),
+        radial-gradient(900px 560px at 98% -2%, oklch(76% .11 220 / .16), transparent 70%),
+        linear-gradient(180deg, var(--bg), oklch(16% 0.02 265));
+    }
+
+    a { color: inherit; }
+
+    img, svg { max-width: 100%; }
+
+    .wrap {
+      width: min(1160px, calc(100% - 40px));
+      margin-inline: auto;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      border-bottom: 1px solid oklch(90% .02 280 / .08);
+      background: oklch(17% .022 267 / .84);
+      backdrop-filter: blur(16px);
+    }
+
+    .nav,
+    footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .nav { min-height: 74px; }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 11px;
+      text-decoration: none;
+      font: 700 1.06rem "Outfit", system-ui, sans-serif;
+    }
+
+    .brand img {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      box-shadow: inset 0 0 0 1px oklch(95% .01 280 / .22);
+    }
+
+    .nav-actions {
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .language-switch {
+      display: inline-flex;
+      padding: 4px;
+      border: 1px solid var(--stroke);
+      border-radius: 8px;
+      background: oklch(95% .01 280 / .05);
+    }
+
+    .language-switch button {
+      border: 0;
+      border-radius: 6px;
+      padding: 5px 9px;
+      color: var(--muted);
+      background: transparent;
+      font: 700 .74rem "Outfit", system-ui, sans-serif;
+      cursor: pointer;
+    }
+
+    .language-switch button[aria-pressed="true"] {
+      color: white;
+      background: var(--accent);
+      box-shadow: 0 8px 18px oklch(56% .19 293 / .3);
+    }
+
+    .pill,
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      font-family: "Outfit", system-ui, sans-serif;
+      transition: transform .18s cubic-bezier(.2,.7,.3,1), border-color .18s ease, box-shadow .18s ease;
+    }
+
+    .pill {
+      min-height: 34px;
+      border: 1px solid var(--stroke);
+      border-radius: 999px;
+      padding: 7px 13px;
+      color: var(--muted);
+      background: oklch(95% .01 280 / .04);
+      font-size: .83rem;
+    }
+
+    .pill:hover,
+    .btn:hover {
+      transform: translateY(-1px);
+      border-color: oklch(92% .02 280 / .38);
+    }
+
+    main { padding: 36px 0 78px; }
+
+    section + section,
+    .section { margin-top: 42px; }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius-xl);
+      background: linear-gradient(180deg, oklch(27% .048 274 / .94), oklch(21% .034 270 / .96));
+      box-shadow: var(--shadow);
+      padding: clamp(24px, 3vw, 44px);
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      top: -230px;
+      right: -170px;
+      width: 480px;
+      height: 480px;
+      border-radius: 50%;
+      background: radial-gradient(circle, oklch(76% .12 220 / .2), transparent 68%);
+      filter: blur(8px);
+      pointer-events: none;
+    }
+
+    .hero-grid {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: .96fr 1.04fr;
+      align-items: center;
+      gap: clamp(24px, 3vw, 40px);
+    }
+
+    h1,
+    h2,
+    h3 {
+      margin: 0;
+      color: var(--text);
+      font-family: "Outfit", system-ui, sans-serif;
+      letter-spacing: -.01em;
+      line-height: 1.07;
+    }
+
+    h1 {
+      max-width: 13ch;
+      margin-block: 12px 14px;
+      font-size: clamp(2.35rem, 5.2vw, 4rem);
+    }
+
+    h2 { font-size: clamp(1.65rem, 3vw, 2.45rem); }
+
+    h3 { font-size: 1.13rem; }
+
+    .eyebrow {
+      color: var(--accent-2);
+      font: 700 .75rem "Outfit", system-ui, sans-serif;
+      letter-spacing: .09em;
+      text-transform: uppercase;
+    }
+
+    .sub {
+      max-width: 57ch;
+      margin: 0;
+      color: var(--muted);
+      font-size: 1.07rem;
+    }
+
+    .cta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .btn {
+      border-radius: 10px;
+      border: 1px solid transparent;
+      padding: 12px 18px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      color: white;
+      background: linear-gradient(135deg, var(--accent), oklch(58% .18 285));
+      box-shadow: 0 14px 30px oklch(52% .19 290 / .34);
+    }
+
+    .btn-secondary {
+      color: var(--text);
+      border-color: var(--stroke);
+      background: oklch(95% .01 280 / .05);
+    }
+
+    .microcopy {
+      margin: 14px 0 0;
+      color: oklch(74% .028 284);
+      font-size: .91rem;
+    }
+
+    .hero-surface {
+      border: 1px solid oklch(92% .015 280 / .12);
+      border-radius: var(--radius-lg);
+      background: linear-gradient(180deg, oklch(19% .028 270), oklch(16% .022 268));
+      box-shadow: 0 20px 48px oklch(8% .02 270 / .5);
+      overflow: hidden;
+    }
+
+    .surface-topline {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 18px;
+      color: var(--muted);
+      font-size: .85rem;
+      border-bottom: 1px solid oklch(90% .02 280 / .08);
+    }
+
+    .status-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      border: 1px solid oklch(80% .15 155 / .28);
+      border-radius: 999px;
+      padding: 5px 10px;
+      color: var(--ok);
+      background: oklch(80% .15 155 / .1);
+      font: 700 .74rem "Outfit", system-ui, sans-serif;
+    }
+
+    .status-chip::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .markdown-preview {
+      padding: 18px;
+      font: 600 .86rem ui-monospace, SFMono-Regular, Menlo, monospace;
+      line-height: 1.65;
+      color: oklch(88% .02 285);
+      overflow-x: auto;
+    }
+
+    .markdown-preview span {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--accent-2);
+      font-family: "Outfit", system-ui, sans-serif;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+      font-size: .71rem;
+    }
+
+    code {
+      white-space: pre;
+      word-break: break-word;
+    }
+
+    .section-head {
+      display: grid;
+      gap: 10px;
+      max-width: 66ch;
+      margin-bottom: 22px;
+    }
+
+    .section-head p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 1rem;
+    }
+
+    .card-grid,
+    .steps,
+    .workflow,
+    .split,
+    .install-grid {
+      display: grid;
+      gap: 15px;
+    }
+
+    .card-grid,
+    .workflow { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+    .steps { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+    .split { grid-template-columns: 1.04fr .96fr; align-items: start; }
+
+    .install-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+    .card,
+    .step,
+    .privacy-card,
+    .faq-card,
+    .install-card {
+      min-width: 0;
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius-lg);
+      background: linear-gradient(180deg, oklch(24% .036 272 / .95), oklch(20% .028 270 / .97));
+      box-shadow: 0 16px 38px oklch(8% .02 270 / .28);
+      padding: 20px;
+    }
+
+    .card p,
+    .step p,
+    .privacy-card > p,
+    .faq-card p,
+    .install-card p {
+      margin: 9px 0 0;
+      color: var(--muted);
+    }
+
+    .num {
+      color: var(--accent-2);
+      font: 700 .74rem "Outfit", system-ui, sans-serif;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .kicker {
+      color: var(--accent-2);
+      font: 700 .74rem "Outfit", system-ui, sans-serif;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .check {
+      list-style: none;
+      margin: 18px 0 0;
+      padding: 0;
+      display: grid;
+      gap: 11px;
+      color: oklch(93% .012 285);
+    }
+
+    .check li {
+      display: flex;
+      gap: 11px;
+      align-items: flex-start;
+    }
+
+    .check li::before {
+      content: "✓";
+      color: var(--ok);
+      font-weight: 800;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .stat {
+      border: 1px solid oklch(90% .02 280 / .09);
+      border-radius: 12px;
+      padding: 15px;
+      background: oklch(95% .01 280 / .04);
+    }
+
+    .stat strong {
+      display: block;
+      margin-bottom: 4px;
+      font: 750 1.7rem "Outfit", system-ui, sans-serif;
+    }
+
+    .stat span {
+      color: var(--muted);
+      font-size: .89rem;
+    }
+
+    .code-panel {
+      margin-top: 14px;
+      padding: 12px;
+      overflow-x: auto;
+      border: 1px solid oklch(90% .02 280 / .1);
+      border-radius: 10px;
+      background: oklch(15% .018 267);
+      color: oklch(88% .018 285);
+      font: 600 .79rem ui-monospace, SFMono-Regular, Menlo, monospace;
+      line-height: 1.6;
+    }
+
+    .download-url {
+      display: block;
+      margin-top: 13px;
+      padding: 10px 12px;
+      border: 1px solid oklch(90% .02 280 / .1);
+      border-radius: 8px;
+      background: oklch(95% .01 280 / .05);
+      color: oklch(90% .018 285);
+      font: 650 .84rem ui-monospace, SFMono-Regular, Menlo, monospace;
+      word-break: break-all;
+    }
+
+    .status-note {
+      display: inline-flex;
+      margin-top: 13px;
+      padding: 5px 10px;
+      border: 1px solid oklch(80% .1 80 / .28);
+      border-radius: 999px;
+      color: oklch(87% .12 85);
+      background: oklch(80% .13 85 / .1);
+      font: 700 .73rem "Outfit", system-ui, sans-serif;
+    }
+
+    .status-note.ok {
+      border-color: oklch(80% .15 155 / .3);
+      color: var(--ok);
+      background: oklch(80% .15 155 / .1);
+    }
+
+    .install-card .btn {
+      width: 100%;
+      margin-top: 16px;
+    }
+
+    .install-list {
+      margin: 14px 0 0;
+      padding-left: 19px;
+      color: var(--muted);
+    }
+
+    .install-list li + li { margin-top: 8px; }
+
+    .faq details {
+      border: 1px solid oklch(90% .02 280 / .1);
+      border-radius: 12px;
+      background: oklch(95% .01 280 / .03);
+      padding: 13px 15px;
+    }
+
+    .faq details + details { margin-top: 10px; }
+
+    summary {
+      cursor: pointer;
+      font: 700 .99rem "Outfit", system-ui, sans-serif;
+      list-style: none;
+    }
+
+    summary::-webkit-details-marker { display: none; }
+
+    details p { margin-top: 9px; }
+
+    .repo-box {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-top: 42px;
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius-lg);
+      background: oklch(95% .01 280 / .04);
+      padding: 20px;
+    }
+
+    .repo-box strong { font-family: "Outfit", system-ui, sans-serif; }
+
+    .repo-box code {
+      display: block;
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: .88rem;
+      white-space: normal;
+      word-break: break-all;
+    }
+
+    footer {
+      margin-top: 26px;
+      padding-top: 22px;
+      border-top: 1px solid oklch(90% .02 280 / .08);
+      color: var(--muted);
+      font-size: .88rem;
+    }
+
+    footer a { color: white; }
+
+    :is(a, button, summary):focus-visible {
+      outline: 2px solid var(--accent-2);
+      outline-offset: 3px;
+      border-radius: 6px;
+    }
+
+    @media (max-width: 960px) {
+      .hero-grid,
+      .split,
+      .card-grid,
+      .steps,
+      .workflow,
+      .install-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .wrap { width: min(680px, calc(100% - 30px)); }
+    }
+
+    @media (max-width: 620px) {
+      .nav {
+        height: auto;
+        flex-direction: column;
+        align-items: stretch;
+        padding-block: 14px;
+      }
+
+      .nav-actions { justify-content: center; }
+
+      .btn,
+      .repo-box .btn { width: 100%; }
+
+      .stats { grid-template-columns: 1fr; }
+
+      .repo-box { align-items: stretch; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+
+      * { transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap nav">
+      <a class="brand" href="/">
+        <img src="/assets/icon-128.png" alt="" width="36" height="36" />
+        <span>Quick Obsidian Clipper</span>
+      </a>
+      <nav class="nav-actions" aria-label="Main navigation">
+        <div class="language-switch">
+          <button type="button" data-lang-choice="en" aria-pressed="true">EN</button>
+          <button type="button" data-lang-choice="de" aria-pressed="false">DE</button>
+        </div>
+        <a class="pill" href="#features" data-i18n="nav.features">Features</a>
+        <a class="pill" href="#install" data-i18n="nav.install">Install</a>
+        <a class="pill" href="#source" data-i18n="nav.source">Source</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-grid">
+        <article>
+          <p class="eyebrow" data-i18n="hero.eyebrow">Capture. Normalize. Sync.</p>
+          <h1 id="hero-title" data-i18n="hero.title">Save any web page straight into Obsidian.</h1>
+          <p class="sub" data-i18n="hero.sub">Quick Obsidian Clipper writes clean Markdown to your Downloads folder. No cloud account, no API keys, no content leaving your browser.</p>
+          <div class="cta">
+            <a class="btn btn-primary" href="https://github.com/MediaPublishing/quick-obsidian-clipper#installation" data-i18n="hero.ctaPrimary">Install the extension</a>
+            <a class="btn btn-secondary" href="#workflow" data-i18n="hero.ctaSecondary">See the workflow</a>
+          </div>
+          <p class="microcopy" data-i18n="hero.microcopy">Version 2.4.16 · Chrome Web Store review pending · manual install is available today.</p>
+        </article>
+
+        <aside class="hero-surface" aria-label="Markdown output preview">
+          <div class="surface-topline">
+            <span data-i18n="surface.label">Clip preview</span>
+            <span class="status-chip" data-i18n="surface.status">Saved locally</span>
+          </div>
+          <pre class="markdown-preview"><span data-i18n="surface.file">2026-08-24--research-article.md</span><code data-i18n="sampleCode">---
+title: "Research Article"
+url: "https://example.com/research-article"
+date_saved: 2026-08-24
+type: article
+word_count: 1240
+reading_time: 6
+tags:
+  - clipping/web
+  - to-process
+---
+
+# Research Article
+
+The extracted body stays clean and readable.
+</code></pre>
+        </aside>
+      </div>
+    </section>
+
+    <section id="steps" class="section" aria-labelledby="steps-title">
+      <div class="section-head">
+        <h2 id="steps-title" data-i18n="steps.title">Start in three steps</h2>
+        <p data-i18n="steps.sub">The clip lands as a Markdown file first. Your folder sync or a manual move brings it into Obsidian.</p>
+      </div>
+      <div class="steps">
+        <article class="step">
+          <div class="num" data-i18n="steps.one.num">Step 01</div>
+          <h3 data-i18n="steps.one.title">Load the extension</h3>
+          <p data-i18n="steps.one.body">Use the Chrome Web Store when review completes, or load the repository folder unpacked in Chrome, Brave, Arc or Edge.</p>
+          <p data-i18n="steps.one.detail">Download or clone the repository, open the extensions page, enable Developer mode and select the project root.</p>
+        </article>
+        <article class="step">
+          <div class="num" data-i18n="steps.two.num">Step 02</div>
+          <h3 data-i18n="steps.two.title">Choose your subfolder</h3>
+          <p data-i18n="steps.two.body">Keep Obsidian-Clips or set a relative path below Downloads. Browser extensions cannot write to arbitrary absolute paths.</p>
+          <p data-i18n="steps.two.detail">The Options page shows whether the folder was detected after your first clip.</p>
+        </article>
+        <article class="step">
+          <div class="num" data-i18n="steps.three.num">Step 03</div>
+          <h3 data-i18n="steps.three.title">Clip and move into Obsidian</h3>
+          <p data-i18n="steps.three.body">Clip with one click or a shortcut. Then let your folder sync move the file into your vault, or move it yourself.</p>
+          <p data-i18n="steps.three.detail">X bookmark IDs stay valid even after the generated files move inside the vault.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="features" aria-labelledby="features-title">
+      <div class="section-head">
+        <h2 id="features-title" data-i18n="features.title">Built for real research sessions</h2>
+        <p data-i18n="features.sub">One small extension covers capture, cleanup, history and recurring X bookmarks without a hosted service.</p>
+      </div>
+      <div class="card-grid">
+        <article class="card">
+          <h3 data-static="featureCards.0.title">One click and shortcuts</h3>
+          <p data-static="featureCards.0.body">Clip the active page with the toolbar icon, Cmd+Shift+S or Ctrl+Shift+S.</p>
+        </article>
+        <article class="card">
+          <h3 data-static="featureCards.1.title">Selection clipping</h3>
+          <p data-static="featureCards.1.body">Press Cmd+Shift+C to save only the selected quote, snippet or section.</p>
+        </article>
+        <article class="card">
+          <h3 data-static="featureCards.2.title">Bulk research tabs</h3>
+          <p data-static="featureCards.2.body">Send every valid tab in a window through one controlled clipping pass.</p>
+        </article>
+        <article class="card">
+          <h3 data-static="featureCards.3.title">Duplicate detection</h3>
+          <p data-static="featureCards.3.body">Normalize tracking parameters and warn before saving the same URL again.</p>
+        </article>
+        <article class="card">
+          <h3 data-static="featureCards.4.title">Site-aware output</h3>
+          <p data-static="featureCards.4.body">Special handling keeps YouTube, X posts, Perplexity results and Medium articles readable.</p>
+        </article>
+        <article class="card">
+          <h3 data-static="featureCards.5.title">X bookmark sync</h3>
+          <p data-static="featureCards.5.body">Turn bookmarked X posts into individual Markdown files on your schedule.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="workflow" aria-labelledby="workflow-title">
+      <div class="section-head">
+        <h2 id="workflow-title" data-i18n="workflow.title">From browser tab to vault note</h2>
+        <p data-i18n="workflow.sub">Each stage stays inspectable: the source URL, the generated Markdown and the final location in your vault.</p>
+      </div>
+      <div class="workflow">
+        <article class="card">
+          <div class="kicker" data-static="workflowCards.0.label">Browser</div>
+          <h3 data-static="workflowCards.0.title">Read and select</h3>
+          <p data-static="workflowCards.0.body">Open any normal HTTP or HTTPS page. Internal browser pages are blocked by explicit URL guards.</p>
+          <code class="code-panel" data-static="workflowCards.0.code">https://example.com/research-article</code>
+        </article>
+        <article class="card">
+          <div class="kicker" data-static="workflowCards.1.label">Markdown</div>
+          <h3 data-static="workflowCards.1.title">Inspectable output</h3>
+          <p data-static="workflowCards.1.body">YAML frontmatter captures title, source, date, tags, word count and reading time.</p>
+          <code class="code-panel" data-static="workflowCards.1.code">title: &quot;Research Article&quot;
+url: &quot;https://example.com/research-article&quot;
+type: article
+tags:
+  - clipping/web</code>
+        </article>
+        <article class="card">
+          <div class="kicker" data-static="workflowCards.2.label">Obsidian</div>
+          <h3 data-static="workflowCards.2.title">Move into your vault</h3>
+          <p data-static="workflowCards.2.body">Use iCloud, Dropbox, Syncthing or another local process to deliver the file to your chosen vault folder.</p>
+          <code class="code-panel" data-static="workflowCards.2.code">Downloads/Obsidian-Clips/ → Vault/Clippings/</code>
+        </article>
+      </div>
+    </section>
+
+    <section class="section split" aria-labelledby="privacy-title">
+      <article class="privacy-card">
+        <div class="kicker" data-i18n="privacy.kicker">Local-first by design</div>
+        <h2 id="privacy-title" data-i18n="privacy.title">Local-first by default</h2>
+        <p data-i18n="privacy.lede">Page extraction happens in your browser. The result is written through the download system. There is no analytics layer and no developer-side copy of your clips.</p>
+        <ul class="check">
+          <li data-static="privacyPoints.0">No account, subscription or API key required</li>
+          <li data-static="privacyPoints.1">No telemetry and no external content transfer</li>
+          <li data-static="privacyPoints.2">Settings, history and X sync IDs stay in local storage</li>
+          <li data-static="privacyPoints.3">Optional archive routes run only after you enable them</li>
+        </ul>
+        <div class="stats">
+          <div class="stat">
+            <strong>3</strong>
+            <span data-static="stats.0.label">capture modes: page, selection and bulk tabs</span>
+          </div>
+          <div class="stat">
+            <strong>100%</strong>
+            <span data-static="stats.1.label">local processing before the file reaches disk</span>
+          </div>
+        </div>
+      </article>
+      <article class="faq-card">
+        <h2 data-i18n="faq.title">Questions before installing</h2>
+        <div class="faq">
+          <details><summary data-static="faqs.0.q">Does it upload my articles anywhere?</summary><p data-static="faqs.0.a">No. Extraction and Markdown creation happen locally. The browser download API writes the finished file to disk.</p></details>
+          <details><summary data-static="faqs.1.q">Where do files actually go?</summary><p data-static="faqs.1.a">They go below your browser's Downloads directory, by default in Obsidian-Clips. The Options page includes a one-click action to reveal that folder.</p></details>
+          <details><summary data-static="faqs.2.q">How does X Bookmark Sync work?</summary><p data-static="faqs.2.a">When enabled, it checks your logged-in X bookmarks on the selected interval. Already-synced post IDs are stored locally so moved files are not synced twice.</p></details>
+          <details><summary data-static="faqs.3.q">Can I use Brave, Arc or Edge?</summary><p data-static="faqs.3.a">Yes. Manual unpacked installation works in Chromium browsers that support Manifest V3 extensions.</p></details>
+        </div>
+      </article>
+    </section>
+
+    <section id="install" aria-labelledby="install-title">
+      <div class="section-head">
+        <h2 id="install-title" data-i18n="install.title">Two installation paths</h2>
+        <p data-i18n="install.sub">Use the store version for normal updates. Use unpacked install while review is still pending.</p>
+      </div>
+      <div class="install-grid">
+        <article class="install-card">
+          <div class="kicker" data-static="installCards.0.kicker">Recommended after review</div>
+          <h3 data-static="installCards.0.title">Chrome Web Store</h3>
+          <p data-static="installCards.0.body">The submitted package uses Manifest V3, explicit permission justifications and automatic publication after approval.</p>
+          <span class="download-url">chromewebstore.google.com/detail/cjhbghekkonbpcibkbogbcemepolpnnl</span>
+          <span class="status-note" data-static="installCards.0.status">Pending review</span>
+          <a class="btn btn-secondary" href="https://chromewebstore.google.com/detail/cjhbghekkonbpcibkbogbcemepolpnnl" target="_blank" rel="noopener noreferrer" data-static="installCards.0.cta">Open store listing</a>
+        </article>
+        <article class="install-card">
+          <div class="kicker" data-static="installCards.1.kicker">Available now</div>
+          <h3 data-static="installCards.1.title">Manual unpacked install</h3>
+          <p data-static="installCards.1.body">Clone the repository, enable Developer mode in your Chromium browser and load the project root.</p>
+          <span class="download-url">github.com/MediaPublishing/quick-obsidian-clipper#installation</span>
+          <span class="status-note ok" data-static="installCards.1.status">Version 2.4.16</span>
+          <a class="btn btn-primary" href="https://github.com/MediaPublishing/quick-obsidian-clipper#installation" target="_blank" rel="noopener noreferrer" data-static="installCards.1.cta">Installation guide</a>
+        </article>
+      </div>
+    </section>
+
+    <div id="source" class="repo-box">
+      <div>
+        <strong data-i18n="repo.title">Source code and privacy policy</strong>
+        <code>github.com/MediaPublishing/quick-obsidian-clipper</code>
+      </div>
+      <a class="btn btn-secondary" href="https://github.com/MediaPublishing/quick-obsidian-clipper" target="_blank" rel="noopener noreferrer" data-i18n="repo.cta">Open GitHub repository</a>
+    </div>
+  </main>
+
+  <footer>
+    <div class="wrap footer">
+      <span data-i18n="footer.tagline">Quick Obsidian Clipper · A local Markdown bridge from the web to Obsidian</span>
+      <span>
+        <a href="https://mediapublishing.github.io/quick-obsidian-clipper/store-listing/privacy-policy.html" target="_blank" rel="noopener noreferrer" data-i18n="footer.privacy">Privacy policy</a>
+      </span>
+    </div>
+  </footer>
+
+  <script src="/app.js" defer></script>
+</body>
+</html>
