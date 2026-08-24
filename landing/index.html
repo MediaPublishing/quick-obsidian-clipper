@@ -335,6 +335,53 @@
       font-size: 1rem;
     }
 
+    .screenshot-frame {
+      margin: 0;
+      overflow: hidden;
+      border: 1px solid oklch(92% .015 280 / .13);
+      border-radius: var(--radius-lg);
+      background:
+        linear-gradient(180deg, oklch(27% .048 274 / .94), oklch(20% .032 270 / .96));
+      box-shadow: var(--shadow);
+    }
+
+    .screenshot-topline {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 18px;
+      border-bottom: 1px solid oklch(90% .02 280 / .08);
+      color: var(--muted);
+      font-size: .86rem;
+    }
+
+    .screenshot-image {
+      display: block;
+      width: 100%;
+      height: auto;
+      background: white;
+    }
+
+    .screenshot-caption {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+      padding: 15px 18px 17px;
+      color: var(--muted);
+      font-size: .93rem;
+    }
+
+    .inline-link {
+      color: var(--accent-2);
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .inline-link:hover { text-decoration: underline; }
+
     .card-grid,
     .steps,
     .workflow,
@@ -703,6 +750,32 @@ The extracted body stays clean and readable.
           <p data-static="featureCards.5.body">Turn bookmarked X posts into individual Markdown files on your schedule.</p>
         </article>
       </div>
+    </section>
+
+    <section id="screenshots" class="section" aria-labelledby="screenshots-title">
+      <div class="section-head">
+        <h2 id="screenshots-title" data-i18n="screenshots.title">See the extension</h2>
+        <p data-i18n="screenshots.sub">The options view keeps storage, health metrics and X bookmark controls in one place.</p>
+      </div>
+      <figure class="screenshot-frame">
+        <div class="screenshot-topline">
+          <span data-i18n="screenshots.product">Quick Obsidian Clipper · Options</span>
+          <span data-i18n="surface.status">Saved locally</span>
+        </div>
+        <img
+          class="screenshot-image"
+          src="/assets/options-dashboard.png"
+          alt="Quick Obsidian Clipper settings showing download folder controls, health metrics and sync status"
+          width="1425"
+          height="2438"
+          loading="lazy"
+          decoding="async"
+        >
+        <figcaption class="screenshot-caption">
+          <span data-i18n="screenshots.caption">Options · download folder, health metrics, sync status and X bookmark controls.</span>
+          <a class="inline-link" href="/assets/options-dashboard.png" target="_blank" rel="noopener noreferrer" data-i18n="screenshots.open">Open full-size view</a>
+        </figcaption>
+      </figure>
     </section>
 
     <section id="workflow" aria-labelledby="workflow-title">
