@@ -254,6 +254,11 @@ cd quick-obsidian-clipper
 
 ## Changelog
 
+### v2.4.17 (2026-08-24)
+- Fixed the History re-clip action: it now uses the same smart routing as normal clips instead of calling a missing function.
+- Verified page clipping, bulk status, duplicate detection and the repaired re-clip path in an isolated Chromium profile.
+- Added the product landing page at [https://quick-obsidian-clipper.pages.dev](https://quick-obsidian-clipper.pages.dev).
+
 ### v2.4.15 (2026-08-18)
 - Prevented `chrome://`, extension, `about:`, `file://`, and other non-web pages from reaching script injection.
 - Added a clear notification for browser-internal pages instead of the `Cannot access a chrome:// URL` console error.

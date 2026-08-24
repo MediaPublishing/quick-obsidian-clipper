@@ -1,6 +1,6 @@
 ---
 date: 2026-08-24
-status: submitted-pending-review
+status: v2.4.17-release-candidate-prepared
 ---
 
 # Quick Obsidian Clipper — Submission Checklist
@@ -162,3 +162,40 @@ Begründung:
 - Keine weitere Store-Version einreichen ohne Owner-Freigabe
 - Kein GitHub Release ohne Owner-Freigabe
 - Kein öffentliches Publizieren des privaten Repos ohne Owner-Freigabe
+
+---
+
+## v2.4.17 Release Candidate 2026-08-24
+
+**Nicht im Chrome Web Store hochgeladen.** Diese Version ist lokal vorbereitet und wartet auf Owner-Freigabe.
+
+### Änderungen
+
+- Repariert: `CLIP_TAB` rief die nicht existierende Funktion `handleClip()` auf. Der History-Reclip verwendet jetzt `getSettings()` plus `clipTabSmart()` und damit denselben geprüften Routing-Pfad wie normale Clips.
+- Landingpage hinzugefügt: <https://quick-obsidian-clipper.pages.dev>
+- Produkt-Screenshot aus der aktuellen Optionsseite erzeugt.
+
+### Lokale Tests
+
+```text
+node --check background-simple.js
+node scripts/test-url-guards.mjs
+node scripts/test-twitter-bookmark-scraper.mjs
+node scripts/test-landing-browser.cjs
+node scripts/capture-options-screenshot.cjs
+```
+
+Alle genannten Checks wurden ohne Fehler ausgeführt. Der isolierte E2E-Lauf bestätigte:
+
+- Normaler Clip: `success: true`, Markdown-Download-ID `1`.
+- Zweiter Clip derselben URL: Duplicate Detection aktiv, Download-ID `2`, zwei History-Einträge.
+- Bulk/Status-Pfad: vorher verifiziert mit `1 / 1`, `success 1`, `failure 0`, Status `Clipped`.
+
+### Build
+
+- Version: `2.4.17`
+- ZIP: `dist/quick-obsidian-clipper-v2.4.17-chrome-store.zip`
+- SHA-256: `89a203d03f1d1b6b473ec1a64d2cdc0c19861cc3ffea63e5ff5f511bbc7916fa`
+- Inhalt: 32 Laufzeitdateien; keine `.git`-, `docs`-, `archive`-, `scripts`- oder `.DS_Store`-Einträge.
+- Checks: Manifest-Version `2.4.17`, JavaScript-Syntaxcheck, URL-Guard-Tests, X-Sync-Scraper-Fallbacktest, Landingpage-Browser-QA und ZIP-Integritätstest.
+- Store-Aktion: keine; Upload und Submission bleiben gesperrt.
