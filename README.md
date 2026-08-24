@@ -230,6 +230,19 @@ Verify the production target separately:
 node scripts/check-landing-url.mjs
 ```
 
+Local visual QA and product-screenshot refresh use the Playwright installation in `tools-ainauten`:
+
+```bash
+node scripts/test-landing-browser.cjs
+node scripts/capture-options-screenshot.cjs
+```
+
+Check whether the public Chrome Web Store item is live yet:
+
+```bash
+node scripts/check-store-url.mjs
+```
+
 ```bash
 # Clone the repo
 git clone https://github.com/MediaPublishing/quick-obsidian-clipper.git
