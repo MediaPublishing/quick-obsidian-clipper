@@ -477,7 +477,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           return;
         }
         console.log('Re-clipping tab:', tab.url);
-        handleClip(tab)
+        getSettings()
+          .then(settings => clipTabSmart(tab, settings))
           .then(() => sendResponse({ success: true }))
           .catch(error => {
             console.error('Re-clip failed:', error);

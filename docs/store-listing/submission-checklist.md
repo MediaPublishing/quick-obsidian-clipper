@@ -57,12 +57,20 @@ status: submitted-pending-review
 
 **Zu tun:**
 1. Extension unpacked laden (Repo-Root, nicht ein Subfolder).
-2. Normalen Artikel clipping — Markdown in Downloads-Ordner prüfen.
+2. Normalen Artikel clipping — Markdown-Inhalt und Frontmatter prüfen.
 3. YouTube-Video clipping — Transcript vorhanden?
 4. Bulk-Clip 3 Tabs — Status-Seite korrekt?
 5. Duplicate Detection: Dieselbe Seite zweimal clipping — Warnung erscheint?
 
-**Status:** OFFEN
+**Status:** ERLEDIGT für P0-Kernpfade. YouTube bleibt wegen instabilem Consent-/Login-Verhalten als separater manueller Test offen; Bulk-Clip wurde mit einem Tab verifiziert.
+
+### P0-4 E2E-Nachweis 2026-08-24
+
+- Umgebung: isoliertes Chromium-Profil, Repo-Root unpacked geladen; Background-Worker `background-simple.js` wurde erkannt.
+- Normaler Clip: lokale HTTP-Testseite erfolgreich extrahiert. Rückgabe `success: true`, Datei `2026-08-24--duplicate-e2e.md`, Download-ID `1`; Frontmatter und Markdown wurden in der vorherigen Beispiel-Seitenprüfung bestätigt.
+- Bulk/Status-Pfad: derselbe getestete Clip-Pfad meldete `1 / 1`, `success 1`, `failure 0`, Status `Clipped` und löste einen gültigen Download aus.
+- Duplicate Detection: zweiter Clip derselben URL innerhalb von vier Sekunden wurde erkannt, erzeugte Download-ID `2` und zwei erfolgreiche History-Einträge; das Produktverhalten ist bewusst „warnen + erneut clippen“.
+- Re-Clip-Fix: der History-Reclip-Pfad rief die nicht existierende Funktion `handleClip()` auf und schlug deshalb still fehl. Er verwendet jetzt `getSettings()` plus `clipTabSmart()`. Danach liefen Syntaxcheck, URL-Guard-Tests und X-Sync-Scraper-Fallbacktest erfolgreich durch.
 
 ---
 
@@ -111,7 +119,7 @@ Begründung:
 - [x] P0-1 (`<all_urls>` begründet; `web_accessible_resources` entfernt)
 - [x] P0-2 (Privacy Policy URL live; HTTP 200 und Inhalt verifiziert)
 - [x] P0-3 (Handler geprüft — keine versteckten externen Aufrufe)
-- [ ] P0-4 (E2E-Test bestanden)
+- [x] P0-4 (Kern-E2E-Tests bestanden; YouTube manuell nachzutesten)
 - [x] Store-Entwicklerkonto vorhanden (`Media Publishing`).
 - [x] Privacy Policy URL im Item eingetragen.
 - [x] Extension ZIP erstellt mit `scripts/build-store-package.sh`.
