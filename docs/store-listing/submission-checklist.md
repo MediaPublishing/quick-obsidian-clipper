@@ -1,11 +1,11 @@
 ---
-date: 2026-08-23
-status: blocked-on-owner-store-account
+date: 2026-08-24
+status: submitted-pending-review
 ---
 
 # Quick Obsidian Clipper — Submission Checklist
 
-> Kein automatischer Upload, kein Publish ohne Owner-Freigabe. Die technischen Vorbereitungen sind abgeschlossen.
+> Eingereicht am 2026-08-24. Google zeigt `Pending review`. Nach bestandener Review wird das Item automatisch veröffentlicht.
 
 ---
 
@@ -112,14 +112,16 @@ Begründung:
 - [x] P0-2 (Privacy Policy URL live; HTTP 200 und Inhalt verifiziert)
 - [x] P0-3 (Handler geprüft — keine versteckten externen Aufrufe)
 - [ ] P0-4 (E2E-Test bestanden)
-- [ ] Store-Entwicklerprofil angelegt ($5 Registrierungsgebühr)
-- [ ] Privacy Policy URL im Profil eingetragen
+- [x] Store-Entwicklerkonto vorhanden (`Media Publishing`).
+- [x] Privacy Policy URL im Item eingetragen.
 - [x] Extension ZIP erstellt mit `scripts/build-store-package.sh`.
 - [x] ZIP-Inhalt geprüft (kein `.git`, kein `docs/`, keine Backup-Dateien).
 - [x] Store-Metadaten, Berechtigungs-Begründungen und Datenschutz-Angaben vorbereitet.
-- [ ] Listing-Text (EN) eingetragen
-- [ ] Screenshots hochgeladen
-- [ ] Store-interne Überprüfung abgewartet
+- [x] Beschreibung, Kategorie `Tools`, Sprache `English (United States)`, Homepage und Support-URL eingetragen.
+- [x] Store-Icon, Screenshot (1280x800 JPEG) und Small Promo Tile (440x280 JPEG) hochgeladen.
+- [x] Privacy-Angaben, Remote-Code-Antwort, Datenverwendungs-Disclosures und drei Zertifizierungen ausgefüllt.
+- [x] Distribution: kostenlos, öffentlich, alle Regionen.
+- [x] Store-interne Überprüfung gestartet; Status ist `Pending review`.
 
 ---
 
@@ -135,8 +137,20 @@ Begründung:
 
 ---
 
-## Was NICHT getan werden darf (vor explizitem GO)
+## Chrome Web Store Receipt 2026-08-24
 
-- Kein Upload auf den Chrome Web Store ohne Developer-Account und Owner-Freigabe
-- Kein GitHub Release
-- Kein öffentliches Publizieren des privaten Repos (falls noch private)
+- Item: `Quick Obsidian Clipper`
+- Item-ID: `cjhbghekkonbpcibkbogbcemepolpnnl`
+- Dashboard: https://chrome.google.com/webstore/devconsole/f4d05cd2-3bae-4a4b-ac47-ed6b1dfdcacc/cjhbghekkonbpcibkbogbcemepolpnnl/edit
+- Submitted at: `2026-08-24`, America/New_York session
+- Dashboard status after submission: `Pending review`
+- Post-review behaviour: automatic publication was enabled in the submit dialog.
+- Google warning acknowledged: broad host permissions can cause an in-depth review and delay publishing. The listing and privacy form document why arbitrary page clipping requires `<all_urls>`.
+
+---
+
+## Release-Grenzen
+
+- Keine weitere Store-Version einreichen ohne Owner-Freigabe
+- Kein GitHub Release ohne Owner-Freigabe
+- Kein öffentliches Publizieren des privaten Repos ohne Owner-Freigabe

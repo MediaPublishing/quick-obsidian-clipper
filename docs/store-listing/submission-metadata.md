@@ -1,7 +1,7 @@
 ---
-date: 2026-08-23
+date: 2026-08-24
 version: 2.4.16
-status: ready-for-owner-review
+status: submitted-pending-review
 ---
 
 # Chrome Web Store Submission Metadata
@@ -11,10 +11,10 @@ status: ready-for-owner-review
 | Field | Value |
 |---|---|
 | Name | Quick Obsidian Clipper |
+| Chrome Web Store item ID | `cjhbghekkonbpcibkbogbcemepolpnnl` |
 | Summary | Save any web page as clean markdown to your Downloads folder — ready for Obsidian, one click or keyboard shortcut. |
-| Category | Productivity |
-| Default language | English |
-| Additional listing language | German |
+| Category | Tools |
+| Language | English (United States) |
 | Homepage URL | https://github.com/MediaPublishing/quick-obsidian-clipper |
 | Support URL | https://github.com/MediaPublishing/quick-obsidian-clipper/issues |
 | Support email | webonomy@gmail.com |
@@ -25,6 +25,8 @@ status: ready-for-owner-review
 **Single purpose:** Save user-selected web content as Markdown files in the local Downloads folder.
 
 **Distribution:** Public, all regions.
+
+**Payments:** Free of charge; no in-app purchases.
 
 **Remote code:** None. The package contains all executable code. No remote JavaScript, WASM, CSS, or HTML is fetched and executed.
 
@@ -57,16 +59,10 @@ status: ready-for-owner-review
 
 | Asset | Path |
 |---|---|
-| Screenshot, 1280x800 | `docs/store-listing/assets/screenshot-01-options-1280x800.png` |
-| Promotional tile, 440x280 | `docs/store-listing/assets/promo-tile-440x280.png` |
+| Screenshot uploaded to CWS, 1280x800 JPEG | `docs/store-listing/assets/screenshot-01-options-1280x800.jpg` |
+| Promotional tile uploaded to CWS, 440x280 JPEG | `docs/store-listing/assets/promo-tile-440x280.jpg` |
 | Upload ZIP | `dist/quick-obsidian-clipper-v2.4.16-chrome-store.zip` |
 
-## Manual dashboard steps
+## Submission status
 
-1. Register or sign in to the Chrome Web Store developer account and pay the one-time USD 5 registration fee.
-2. Enter the privacy-policy URL in the developer account settings.
-3. Create a new item and upload `dist/quick-obsidian-clipper-v2.4.16-chrome-store.zip`.
-4. Paste the English long description from `description-en.md`.
-5. Add the screenshot and promotional tile from `docs/store-listing/assets/`.
-6. Complete privacy practices using the disclosures above.
-7. Submit for review only after owner approval.
+Submitted through the Media Publishing developer dashboard on 2026-08-24. The dashboard reports `Pending review` for item ID `cjhbghekkonbpcibkbogbcemepolpnnl`. Automatic publication after a successful review was enabled.
