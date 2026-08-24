@@ -4,6 +4,8 @@
 
 Landing page: <https://quick-obsidian-clipper.pages.dev>
 
+[![Landing page](https://img.shields.io/badge/Landing-quick--obsidian--clipper.pages.dev-7c5cff)](https://quick-obsidian-clipper.pages.dev)
+
 [![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-blue?logo=googlechrome)](https://developer.chrome.com/docs/extensions/)
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-green)](https://developer.chrome.com/docs/extensions/mv3/intro/)
 
@@ -213,6 +215,20 @@ Contributions are welcome! Please:
 5. Open a Pull Request
 
 ### Development
+
+### Landing page
+
+The static product page lives in [`landing/`](landing/). Deploy it to the existing Cloudflare Pages project with:
+
+```bash
+npx wrangler pages deploy landing --project-name quick-obsidian-clipper --branch main
+```
+
+Verify the production target separately:
+
+```bash
+node scripts/check-landing-url.mjs
+```
 
 ```bash
 # Clone the repo
