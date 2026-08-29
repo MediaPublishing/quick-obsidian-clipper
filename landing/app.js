@@ -11,7 +11,7 @@
       "hero.sub": "Quick Obsidian Clipper writes clean Markdown to your Downloads folder. No cloud account, no API keys, no content leaving your browser.",
       "hero.ctaPrimary": "Install the extension",
       "hero.ctaSecondary": "See the workflow",
-      "hero.microcopy": "Version 2.4.16 · Chrome Web Store review pending · manual install is available today.",
+      "hero.microcopy": "Manual install 2.4.17 · Chrome Web Store 2.4.16 · all processing stays local.",
       "surface.label": "Clip preview",
       "surface.status": "Saved locally",
       "surface.file": "2026-08-24--research-article.md",
@@ -22,7 +22,7 @@
       "steps.sub": "The clip lands as a Markdown file first. Your folder sync or a manual move brings it into Obsidian.",
       "steps.one.num": "Step 01",
       "steps.one.title": "Load the extension",
-      "steps.one.body": "Use the Chrome Web Store when review completes, or load the repository folder unpacked in Chrome, Brave, Arc or Edge.",
+      "steps.one.body": "Use the published Chrome Web Store version, or load version 2.4.17 from the repository unpacked in Chrome, Brave, Arc or Edge.",
       "steps.two.num": "Step 02",
       "steps.two.title": "Choose your subfolder",
       "steps.two.body": "Keep Obsidian-Clips or set a relative path below Downloads. Browser extensions cannot write to arbitrary absolute paths.",
@@ -45,7 +45,7 @@
       "privacy.lede": "Page extraction happens in your browser. The result is written through the download system. There is no analytics layer and no developer-side copy of your clips.",
       "privacy.kicker": "Local-first by design",
       "install.title": "Two installation paths",
-      "install.sub": "Use the store version for normal updates. Use unpacked install while review is still pending.",
+      "install.sub": "Use the store version for normal updates. Use the unpacked install for the latest repository release.",
       "faq.title": "Questions before installing",
       "repo.title": "Source code and privacy policy",
       "repo.cta": "Open GitHub repository",
@@ -63,7 +63,7 @@
       "hero.sub": "Quick Obsidian Clipper schreibt sauberes Markdown in deinen Downloads-Ordner. Kein Cloud-Konto, keine API-Keys und deine Inhalte verlassen den Browser nicht.",
       "hero.ctaPrimary": "Extension installieren",
       "hero.ctaSecondary": "Workflow ansehen",
-      "hero.microcopy": "Version 2.4.16 · Chrome Web Store Prüfung läuft · manuelle Installation ist heute verfügbar.",
+      "hero.microcopy": "Manuelle Installation 2.4.17 · Chrome Web Store 2.4.16 · alle Inhalte bleiben lokal.",
       "surface.label": "Clip-Vorschau",
       "surface.status": "Lokal gespeichert",
       "surface.file": "2026-08-24--research-article.md",
@@ -74,7 +74,7 @@
       "steps.sub": "Der Clip landet zuerst als Markdown-Datei. Dein Ordner-Sync oder ein manueller Move bringt ihn nach Obsidian.",
       "steps.one.num": "Schritt 01",
       "steps.one.title": "Extension laden",
-      "steps.one.body": "Nutze den Chrome Web Store, sobald die Prüfung abgeschlossen ist, oder lade den Repository-Ordner in Chrome, Brave, Arc oder Edge unpacked.",
+      "steps.one.body": "Nutze die veröffentlichte Chrome-Web-Store-Version oder lade Version 2.4.17 aus dem Repository unpacked in Chrome, Brave, Arc oder Edge.",
       "steps.two.num": "Schritt 02",
       "steps.two.title": "Unterordner wählen",
       "steps.two.body": "Behalte Obsidian-Clips oder setze einen relativen Pfad unter Downloads. Extensions können nicht in beliebige absolute Pfade schreiben.",
@@ -97,7 +97,7 @@
       "privacy.lede": "Die Extraktion passiert im Browser. Das Ergebnis wird über das Download-System geschrieben. Es gibt keine Analytics-Schicht und keine Entwicklerkopie deiner Clips.",
       "privacy.kicker": "Local-first als Standard",
       "install.title": "Zwei Installationswege",
-      "install.sub": "Nutze die Store-Version für normale Updates. Nutze die unpacked Installation, während die Review läuft.",
+      "install.sub": "Nutze die Store-Version für normale Updates. Nutze die unpacked Installation für den neuesten Repository-Stand.",
       "faq.title": "Fragen vor der Installation",
       "repo.title": "Source Code und Datenschutz",
       "repo.cta": "GitHub-Repository öffnen",
@@ -123,7 +123,7 @@
       ],
       privacyPoints: [
         "No account, subscription or API key required",
-        "No telemetry and no external content transfer",
+        "No developer telemetry or developer-side copy of your clips",
         "Settings, history and X sync IDs stay in local storage",
         "Optional archive routes run only after you enable them"
       ],
@@ -132,11 +132,11 @@
         { value: "100%", label: "local processing before the file reaches disk" }
       ],
       installCards: [
-        { kicker: "Recommended after review", title: "Chrome Web Store", body: "The submitted package uses Manifest V3, explicit permission justifications and automatic publication after approval.", cta: "Open store listing", href: "https://chromewebstore.google.com/detail/cjhbghekkonbpcibkbogbcemepolpnnl", status: "Pending review" },
-        { kicker: "Available now", title: "Manual unpacked install", body: "Clone the repository, enable Developer mode in your Chromium browser and load the project root.", cta: "Installation guide", href: "https://github.com/MediaPublishing/quick-obsidian-clipper#installation", status: "Version 2.4.16" }
+        { kicker: "Published", title: "Chrome Web Store", body: "The published store release supports normal browser updates. Version 2.4.17 is currently available through the manual install below.", cta: "Open store listing", href: "https://chromewebstore.google.com/detail/cjhbghekkonbpcibkbogbcemepolpnnl", status: "Version 2.4.16" },
+        { kicker: "Available now", title: "Manual unpacked install", body: "Clone the repository, enable Developer mode in your Chromium browser and load the project root.", cta: "Installation guide", href: "https://github.com/MediaPublishing/quick-obsidian-clipper#installation", status: "Version 2.4.17" }
       ],
       faqs: [
-        { q: "Does it upload my articles anywhere?", a: "No. Extraction and Markdown creation happen locally. The browser download API writes the finished file to disk." },
+        { q: "Does it upload my articles anywhere?", a: "By default, extraction and Markdown creation stay local. Optional archive routing contacts archive.ph, and X sync contacts X only when you enable or run those features. No clip copy is sent to the developer." },
         { q: "Where do files actually go?", a: "They go below your browser's Downloads directory, by default in Obsidian-Clips. The Options page includes a one-click action to reveal that folder." },
         { q: "How does X Bookmark Sync work?", a: "When enabled, it checks your logged-in X bookmarks on the selected interval. Already-synced post IDs are stored locally so moved files are not synced twice." },
         { q: "Can I use Brave, Arc or Edge?", a: "Yes. Manual unpacked installation works in Chromium browsers that support Manifest V3 extensions." },
@@ -161,7 +161,7 @@
       ],
       privacyPoints: [
         "Kein Konto, kein Abo und kein API-Key nötig",
-        "Keine Telemetrie und kein externer Content-Transfer",
+        "Keine Entwickler-Telemetrie und keine Entwicklerkopie deiner Clips",
         "Einstellungen, History und X-Sync-IDs bleiben lokal",
         "Optionale Archive-Routen laufen erst nach Aktivierung"
       ],
@@ -170,12 +170,12 @@
         { value: "100%", label: "lokale Verarbeitung, bevor die Datei auf die Platte kommt" }
       ],
       installCards: [
-        { kicker: "Empfohlen nach Review", title: "Chrome Web Store", body: "Das eingereichte Paket nutzt Manifest V3, explizite Permission-Begründungen und automatische Veröffentlichung nach Freigabe.", cta: "Store-Listing öffnen", href: "https://chromewebstore.google.com/detail/cjhbghekkonbpcibkbogbcemepolpnnl", status: "Review läuft" },
-        { kicker: "Jetzt verfügbar", title: "Manuelle unpacked Installation", body: "Klone das Repository, aktiviere den Developer Mode im Chromium-Browser und lade das Projekt-Root.", cta: "Installationsanleitung", href: "https://github.com/MediaPublishing/quick-obsidian-clipper#installation", status: "Version 2.4.16" }
+        { kicker: "Veröffentlicht", title: "Chrome Web Store", body: "Die veröffentlichte Store-Version erhält normale Browser-Updates. Version 2.4.17 ist derzeit über die manuelle Installation unten verfügbar.", cta: "Store-Listing öffnen", href: "https://chromewebstore.google.com/detail/cjhbghekkonbpcibkbogbcemepolpnnl", status: "Version 2.4.16" },
+        { kicker: "Jetzt verfügbar", title: "Manuelle unpacked Installation", body: "Klone das Repository, aktiviere den Developer Mode im Chromium-Browser und lade das Projekt-Root.", cta: "Installationsanleitung", href: "https://github.com/MediaPublishing/quick-obsidian-clipper#installation", status: "Version 2.4.17" }
       ],
       faqs: [
-        { q: "Werden Artikel irgendwo hochgeladen?", a: "Nein. Extraktion und Markdown-Erzeugung laufen lokal. Die Download-API des Browsers schreibt die fertige Datei auf die Platte." },
-        { q: "Wo landen die Dateien genau?", a: "Sie liegen unter dem Downloads-Ordner des Browsers, standardmässig in Obsidian-Clips. Die Optionsseite hat einen Ein-Klick-Pfad zum Ordner." },
+        { q: "Werden Artikel irgendwo hochgeladen?", a: "Standardmäßig bleiben Extraktion und Markdown-Erstellung lokal. Optionale Archive-Routen kontaktieren archive.ph, und der X-Sync kontaktiert X nur, wenn du diese Funktionen aktivierst oder startest. Eine Clip-Kopie geht nie an den Entwickler." },
+        { q: "Wo landen die Dateien genau?", a: "Sie liegen unter dem Downloads-Ordner des Browsers, standardmäßig in Obsidian-Clips. Die Optionsseite hat einen Ein-Klick-Pfad zum Ordner." },
         { q: "Wie funktioniert der X-Bookmark-Sync?", a: "Nach Aktivierung prüft er deine eingeloggten X-Bookmarks im gewählten Intervall. Gespeicherte Post-IDs bleiben lokal, damit verschobene Dateien nicht doppelt synchronisiert werden." },
         { q: "Funktioniert das in Brave, Arc oder Edge?", a: "Ja. Die manuelle unpacked Installation funktioniert in Chromium-Browsern mit Manifest-V3-Support." },
         { q: "Warum braucht die Extension breiten Seitenzugriff?", a: "Ein allgemeiner Web Clipper muss auf der gewählten Seite arbeiten. Bulk-Clipping braucht zusätzlich URL-Informationen zu bereits offenen Tabs." },
@@ -199,11 +199,12 @@
 
   function renderStatic(lang) {
     document.querySelectorAll('[data-static]').forEach(element => {
-      const [group, index] = element.dataset.static.split(".");
+      const [group, index, field] = element.dataset.static.split(".");
       const item = staticContent[lang][group];
       if (typeof item === "string") element.textContent = item;
       if (Array.isArray(item) && item[index]) {
-        if (element.dataset.field) element.textContent = item[index][element.dataset.field] || "";
+        if (field) element.textContent = item[index][field] || "";
+        else if (element.dataset.field) element.textContent = item[index][element.dataset.field] || "";
         else if (element.tagName === "LI") element.textContent = item[index];
       }
     });
@@ -226,9 +227,14 @@
   }
 
   languageButtons.forEach(button => {
-    button.addEventListener("click", () => applyLanguage(button.dataset.langChoice));
+    button.addEventListener("click", () => {
+      const lang = button.dataset.langChoice;
+      applyLanguage(lang);
+      renderStatic(lang);
+    });
   });
 
-  applyLanguage(getInitialLanguage());
-  renderStatic(getInitialLanguage());
+  const initialLanguage = getInitialLanguage();
+  applyLanguage(initialLanguage);
+  renderStatic(initialLanguage);
 })();

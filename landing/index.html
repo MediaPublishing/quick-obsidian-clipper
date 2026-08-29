@@ -667,7 +667,7 @@
             <a class="btn btn-primary" href="https://github.com/MediaPublishing/quick-obsidian-clipper#installation" data-i18n="hero.ctaPrimary">Install the extension</a>
             <a class="btn btn-secondary" href="#workflow" data-i18n="hero.ctaSecondary">See the workflow</a>
           </div>
-          <p class="microcopy" data-i18n="hero.microcopy">Version 2.4.16 · Chrome Web Store review pending · manual install is available today.</p>
+          <p class="microcopy" data-i18n="hero.microcopy">Manual install 2.4.17 · Chrome Web Store 2.4.16 · all processing stays local.</p>
         </article>
 
         <aside class="hero-surface" aria-label="Markdown output preview">
@@ -704,7 +704,7 @@ The extracted body stays clean and readable.
         <article class="step">
           <div class="num" data-i18n="steps.one.num">Step 01</div>
           <h3 data-i18n="steps.one.title">Load the extension</h3>
-          <p data-i18n="steps.one.body">Use the Chrome Web Store when review completes, or load the repository folder unpacked in Chrome, Brave, Arc or Edge.</p>
+          <p data-i18n="steps.one.body">Use the published Chrome Web Store version, or load version 2.4.17 from the repository unpacked in Chrome, Brave, Arc or Edge.</p>
           <p data-i18n="steps.one.detail">Download or clone the repository, open the extensions page, enable Developer mode and select the project root.</p>
         </article>
         <article class="step">
@@ -819,7 +819,7 @@ tags:
         <p data-i18n="privacy.lede">Page extraction happens in your browser. The result is written through the download system. There is no analytics layer and no developer-side copy of your clips.</p>
         <ul class="check">
           <li data-static="privacyPoints.0">No account, subscription or API key required</li>
-          <li data-static="privacyPoints.1">No telemetry and no external content transfer</li>
+          <li data-static="privacyPoints.1">No developer telemetry or developer-side copy of your clips</li>
           <li data-static="privacyPoints.2">Settings, history and X sync IDs stay in local storage</li>
           <li data-static="privacyPoints.3">Optional archive routes run only after you enable them</li>
         </ul>
@@ -837,7 +837,7 @@ tags:
       <article class="faq-card">
         <h2 data-i18n="faq.title">Questions before installing</h2>
         <div class="faq">
-          <details><summary data-static="faqs.0.q">Does it upload my articles anywhere?</summary><p data-static="faqs.0.a">No. Extraction and Markdown creation happen locally. The browser download API writes the finished file to disk.</p></details>
+          <details><summary data-static="faqs.0.q">Does it upload my articles anywhere?</summary><p data-static="faqs.0.a">By default, extraction and Markdown creation stay local. Optional archive routing contacts archive.ph, and X sync contacts X only when you enable or run those features. No clip copy is sent to the developer.</p></details>
           <details><summary data-static="faqs.1.q">Where do files actually go?</summary><p data-static="faqs.1.a">They go below your browser's Downloads directory, by default in Obsidian-Clips. The Options page includes a one-click action to reveal that folder.</p></details>
           <details><summary data-static="faqs.2.q">How does X Bookmark Sync work?</summary><p data-static="faqs.2.a">When enabled, it checks your logged-in X bookmarks on the selected interval. Already-synced post IDs are stored locally so moved files are not synced twice.</p></details>
           <details><summary data-static="faqs.3.q">Can I use Brave, Arc or Edge?</summary><p data-static="faqs.3.a">Yes. Manual unpacked installation works in Chromium browsers that support Manifest V3 extensions.</p></details>
@@ -848,15 +848,15 @@ tags:
     <section id="install" aria-labelledby="install-title">
       <div class="section-head">
         <h2 id="install-title" data-i18n="install.title">Two installation paths</h2>
-        <p data-i18n="install.sub">Use the store version for normal updates. Use unpacked install while review is still pending.</p>
+        <p data-i18n="install.sub">Use the store version for normal updates. Use the unpacked install for the latest repository release.</p>
       </div>
       <div class="install-grid">
         <article class="install-card">
-          <div class="kicker" data-static="installCards.0.kicker">Recommended after review</div>
+          <div class="kicker" data-static="installCards.0.kicker">Published</div>
           <h3 data-static="installCards.0.title">Chrome Web Store</h3>
-          <p data-static="installCards.0.body">The submitted package uses Manifest V3, explicit permission justifications and automatic publication after approval.</p>
+          <p data-static="installCards.0.body">The published store release supports normal browser updates. Version 2.4.17 is currently available through the manual install below.</p>
           <span class="download-url">chromewebstore.google.com/detail/cjhbghekkonbpcibkbogbcemepolpnnl</span>
-          <span class="status-note" data-static="installCards.0.status">Pending review</span>
+          <span class="status-note" data-static="installCards.0.status">Version 2.4.16</span>
           <a class="btn btn-secondary" href="https://chromewebstore.google.com/detail/cjhbghekkonbpcibkbogbcemepolpnnl" target="_blank" rel="noopener noreferrer" data-static="installCards.0.cta">Open store listing</a>
         </article>
         <article class="install-card">
@@ -864,7 +864,7 @@ tags:
           <h3 data-static="installCards.1.title">Manual unpacked install</h3>
           <p data-static="installCards.1.body">Clone the repository, enable Developer mode in your Chromium browser and load the project root.</p>
           <span class="download-url">github.com/MediaPublishing/quick-obsidian-clipper#installation</span>
-          <span class="status-note ok" data-static="installCards.1.status">Version 2.4.16</span>
+          <span class="status-note ok" data-static="installCards.1.status">Version 2.4.17</span>
           <a class="btn btn-primary" href="https://github.com/MediaPublishing/quick-obsidian-clipper#installation" target="_blank" rel="noopener noreferrer" data-static="installCards.1.cta">Installation guide</a>
         </article>
       </div>
