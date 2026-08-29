@@ -20,7 +20,7 @@
 ### Step 1: Backup Old Extension (Optional)
 
 ```bash
-cd "/Users/MediaPublishing/My Drive (webonomy@gmail.com)/!Vibe-Coding/Extensions/Extension WebClipperObsidian/quick-obsidian-clipper-extension"
+cd "$HOME/Projects/quick-obsidian-clipper"
 
 # Backup old background.js
 cp background.js background-old-broken.js.bak 2>/dev/null || true
@@ -59,7 +59,7 @@ rm -rf ~/Library/Application\ Support/Google/Chrome/Default/Extension\ State
    - Go to `chrome://extensions/`
    - Enable **Developer mode** (top right)
    - Click **Load unpacked**
-   - Select: `/Users/MediaPublishing/My Drive (webonomy@gmail.com)/!Vibe-Coding/Extensions/Extension WebClipperObsidian/quick-obsidian-clipper-extension`
+   - Select the cloned `quick-obsidian-clipper` repository folder.
 
 5. **Verify it loaded:**
    - Should say "Service worker (Active)"
@@ -83,7 +83,7 @@ crontab -l | grep obsidian-clip-sync
 
 Should show:
 ```
-*/5 * * * * /Users/MediaPublishing/.claude/scripts/obsidian-clip-sync.sh
+*/5 * * * * "$HOME/.local/bin/obsidian-clip-sync.sh"
 ```
 
 ---

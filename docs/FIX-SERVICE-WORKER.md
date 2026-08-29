@@ -28,7 +28,7 @@ rm -rf ~/Library/Application\ Support/Google/Chrome/Default/Extension\ State
 3. Find "Quick Obsidian Clipper"
 4. Click Remove
 5. Click "Load unpacked"
-6. Select: /Users/MediaPublishing/My Drive (webonomy@gmail.com)/!Vibe-Coding/Extensions/Extension WebClipperObsidian/quick-obsidian-clipper-extension
+6. Select the cloned `quick-obsidian-clipper` repository folder.
 ```
 
 ### Step 4: Verify
@@ -44,7 +44,7 @@ If the above doesn't work, the path with spaces might be causing issues. Copy th
 
 ```bash
 # Copy to simpler path
-cp -r "/Users/MediaPublishing/My Drive (webonomy@gmail.com)/!Vibe-Coding/Extensions/Extension WebClipperObsidian/quick-obsidian-clipper-extension" ~/Desktop/quick-obsidian-clipper
+cp -r "$HOME/Projects/quick-obsidian-clipper" "$HOME/Desktop/quick-obsidian-clipper"
 
 # Load from new location
 # chrome://extensions/ → Load unpacked → ~/Desktop/quick-obsidian-clipper

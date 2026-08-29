@@ -126,7 +126,7 @@ ls -la ~/Documents/Obsidian-Clips/
 cat ~/.claude/logs/clip-sync.log
 
 # Verify file appeared in vault
-ls -la "$HOME/My Drive (webonomy@gmail.com)/!Vault/Clippings/Browser-Clips/"
+ls -la "$HOME/Documents/Obsidian/Vault/Clippings/Browser-Clips/"
 ```
 
 ---
