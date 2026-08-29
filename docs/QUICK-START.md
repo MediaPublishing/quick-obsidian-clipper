@@ -85,7 +85,7 @@ API mode will be used as fallback if filesystem fails.
 
 **Clips not appearing in vault?**
 - Check Downloads/Obsidian/Clippings/ first
-- Verify symlink: `ls -la "/Users/MediaPublishing/My Drive (webonomy@gmail.com)/!Vault/Clippings/" | grep Browser-Clips`
+- Verify symlink: `ls -la "$HOME/Documents/Obsidian/Vault/Clippings/" | grep Browser-Clips`
 
 **Want original extension back?**
 - See UPGRADE-NOTES.md for rollback instructions

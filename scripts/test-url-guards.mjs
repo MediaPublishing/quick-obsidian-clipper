@@ -16,6 +16,7 @@ for (const url of [
   'chrome-extension://abcdefghijklmnop/options.html',
   'about:blank',
   'file:///Users/example/article.html',
+  'not a valid URL',
 ]) {
   assert.equal(isClippablePage(url), false, `${url} should not be clippable`);
   assert.match(getClippablePageError(url), /cannot be clipped|No active page/);

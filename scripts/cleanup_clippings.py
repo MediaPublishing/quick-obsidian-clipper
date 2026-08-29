@@ -3,9 +3,10 @@
 Smart cleanup tool for legacy Obsidian clippings.
 
 Usage:
-  python scripts/cleanup_clippings.py
+  python scripts/cleanup_clippings.py /path/to/Knowledge/Clippings
+  python scripts/cleanup_clippings.py /path/to/Knowledge/Clippings --apply
 
-The script updates clipped notes under My Drive/.../Knowledge/Clippings by:
+The script updates clipped notes under the explicitly supplied directory by:
   * Adding clip_kind metadata and helpful tags (bookmark, news, repo, video).
   * Flagging low-value clips (Untitled/login gate) with `needs_reclip: true`.
   * Normalizing tags (e.g., adds clipping/web).
@@ -14,12 +15,12 @@ The script updates clipped notes under My Drive/.../Knowledge/Clippings by:
 from __future__ import annotations
 
 import re
+import argparse
 from datetime import datetime
 from pathlib import Path
 
 import yaml
 
-BASE = Path("/Users/MediaPublishing/My Drive (webonomy@gmail.com)/!Vault/Knowledge/Clippings")
 SINCE = datetime(2025, 12, 15)
 NEWS_DOMAINS = {
     "nytimes.com",
@@ -53,7 +54,17 @@ NEWS_DOMAINS = {
 
 
 def main():
-    matches = list(BASE.rglob("*.md"))
+    parser = argparse.ArgumentParser(description="Normalize legacy Quick Obsidian Clipper notes.")
+    parser.add_argument("clippings_dir", type=Path, help="Path to the local Clippings directory")
+    parser.add_argument("--apply", action="store_true", help="Write changes; the default is a dry run")
+    args = parser.parse_args()
+    base = args.clippings_dir.expanduser().resolve()
+    if not base.is_dir():
+        raise SystemExit(f"Clippings directory not found: {base}")
+    if "clip" not in base.name.lower():
+        raise SystemExit("Refusing to scan a directory whose name does not contain 'clip'.")
+
+    matches = [path for folder in base.iterdir() if folder.is_dir() for path in folder.glob("*.md")]
     touched = 0
 
     for path in matches:
@@ -103,14 +114,14 @@ def main():
                 data, sort_keys=False, allow_unicode=True
             ).strip()
             rebuilt = f"---\n{new_frontmatter}\n---\n\n{body}"
-            path.write_text(rebuilt, encoding="utf-8")
+            if args.apply:
+                path.write_text(rebuilt, encoding="utf-8")
 
-    print(f"Processed {len(matches)} files, updated {touched} files.")
+    action = "updated" if args.apply else "would update"
+    print(f"Processed {len(matches)} files, {action} {touched} files.")
 
 
 def should_process(path: Path) -> bool:
-    if "Knowledge/Clippings" not in str(path):
-        return False
     parent = path.parent
     if not parent.name or not re.match(r"\d{4}-\d{2}-\d{2}", parent.name):
         return False

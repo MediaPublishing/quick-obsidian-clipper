@@ -34,7 +34,7 @@
 
 **Backup Location:**
 ```
-/Users/MediaPublishing/My Drive (webonomy@gmail.com)/!Vibe-Coding/Extensions/Extension WebClipperObsidian/
+$HOME/Projects/
 ```
 
 **Backup Files:**
@@ -49,7 +49,7 @@ If you need to revert to the previous version:
 ### Option 1: Quick Rollback (Recommended)
 
 ```bash
-cd "/Users/MediaPublishing/My Drive (webonomy@gmail.com)/!Vibe-Coding/Extensions/Extension WebClipperObsidian/quick-obsidian-clipper-extension"
+cd "$HOME/Projects/quick-obsidian-clipper"
 
 # Restore old background.js
 mv background.js background-new.js
@@ -72,7 +72,7 @@ rm filesystem.js
 ### Option 2: Full Restore from Backup
 
 ```bash
-cd "/Users/MediaPublishing/My Drive (webonomy@gmail.com)/!Vibe-Coding/Extensions/Extension WebClipperObsidian"
+cd "$HOME/Projects"
 
 # Find your backup file
 ls -lt *.tar.gz | head -1
@@ -127,7 +127,7 @@ Your existing settings are preserved. You have three options:
 
 ```bash
 # Create symlink from Downloads to your Obsidian vault
-ln -s ~/Downloads/Obsidian/Clippings "/Users/MediaPublishing/My Drive (webonomy@gmail.com)/!Vault/Clippings"
+ln -s "$HOME/Downloads/Obsidian/Clippings" "$HOME/Documents/Obsidian/Vault/Clippings"
 
 # Now files saved to Downloads/Obsidian/Clippings automatically appear in your vault!
 ```

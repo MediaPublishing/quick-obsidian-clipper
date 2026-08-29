@@ -230,10 +230,13 @@ Verify the production target separately:
 node scripts/check-landing-url.mjs
 ```
 
-Local visual QA and product-screenshot refresh use the Playwright installation in `tools-ainauten`:
+Local browser QA requires Playwright. Install it in the repository or point `QOC_PLAYWRIGHT_PATH` to an existing Playwright package:
 
 ```bash
+export QOC_PLAYWRIGHT_PATH=/path/to/node_modules/playwright
 node scripts/test-landing-browser.cjs
+node scripts/test-options-runtime.cjs
+node scripts/test-history-reclip.cjs
 node scripts/capture-options-screenshot.cjs
 ```
 
@@ -254,10 +257,14 @@ cd quick-obsidian-clipper
 
 ## Changelog
 
-### v2.4.17 (2026-08-24)
-- Fixed the History re-clip action: it now uses the same smart routing as normal clips instead of calling a missing function.
-- Verified page clipping, bulk status, duplicate detection and the repaired re-clip path in an isolated Chromium profile.
-- Added the product landing page at [https://quick-obsidian-clipper.pages.dev](https://quick-obsidian-clipper.pages.dev).
+### v2.4.17 (2026-08-29)
+- Re-clip now blocks browser-internal URLs cleanly while normal web URLs continue through the clip workflow.
+- Overview and X-Bookmark Sync counters update automatically after storage changes without reloading the settings page.
+- X-Bookmark Sync metrics now distinguish tracked, current, new and already tracked bookmarks, with actions visible near the top of the section.
+- Added a visible download-folder action and a persistent, mobile-friendly settings toolbar.
+- Added English and German landing-page QA with truthful Chrome Web Store and manual-install version labels.
+- Added isolated Chromium regression tests for settings actions, X sync, download location, history re-clip and responsive layout.
+- Removed machine-specific local paths from public scripts and documentation.
 
 ### v2.4.15 (2026-08-18)
 - Prevented `chrome://`, extension, `about:`, `file://`, and other non-web pages from reaching script injection.

@@ -78,7 +78,7 @@ rm -rf ~/Library/Application\ Support/Google/Chrome/Default/Extension\ State
 2. Go to chrome://extensions/
 3. Enable "Developer mode" (top right toggle)
 4. Click "Load unpacked"
-5. Select: /Users/MediaPublishing/My Drive (webonomy@gmail.com)/!Vibe-Coding/Extensions/Extension WebClipperObsidian/quick-obsidian-clipper-extension
+5. Select the cloned `quick-obsidian-clipper` repository folder.
 6. Verify: Should show "Service worker (Active)" - NO ERRORS!
 ```
 
@@ -121,7 +121,7 @@ cat ~/.claude/logs/clip-sync.log
 
 **Check vault:**
 ```bash
-ls -la "$HOME/My Drive (webonomy@gmail.com)/!Vault/Clippings/Browser-Clips/"
+ls -la "$HOME/Documents/Obsidian/Vault/Clippings/Browser-Clips/"
 ```
 
 ---
@@ -178,7 +178,7 @@ ls -la "$HOME/My Drive (webonomy@gmail.com)/!Vault/Clippings/Browser-Clips/"
 
 **Extension:**
 ```
-/Users/MediaPublishing/My Drive (webonomy@gmail.com)/!Vibe-Coding/Extensions/Extension WebClipperObsidian/quick-obsidian-clipper-extension/
+$HOME/Projects/quick-obsidian-clipper/
 ├── manifest.json (NEW - v2.0.0)
 ├── background-simple.js (NEW - clean & working)
 ├── content.js (existing - works great)

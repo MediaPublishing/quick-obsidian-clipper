@@ -547,7 +547,7 @@ button:hover {
 # Sync Downloads/Obsidian-Clips → Vault/Clippings/Browser-Clips
 
 SOURCE="$HOME/Downloads/Obsidian-Clips"
-DEST="$HOME/My Drive (webonomy@gmail.com)/!Vault/Clippings/Browser-Clips"
+DEST="$HOME/Documents/Obsidian/Vault/Clippings/Browser-Clips"
 LOG="$HOME/.claude/logs/clip-sync.log"
 
 # Create directories if they don't exist

@@ -240,7 +240,7 @@
 
 ```bash
 # Navigate to extension directory
-cd "/Users/MediaPublishing/My Drive (webonomy@gmail.com)/!Vibe-Coding/Extensions/Extension WebClipperObsidian/quick-obsidian-clipper-extension"
+cd "$HOME/Projects/quick-obsidian-clipper"
 
 # Open Chrome
 chrome://extensions/
