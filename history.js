@@ -1,3 +1,5 @@
+import { getClippablePageError } from './src/url-guards.js';
+
 // History page JavaScript
 let allClips = [];
 let filteredClips = [];
@@ -34,16 +36,21 @@ function renderHistory(clips) {
   container.innerHTML = clips.map((clip, index) => {
     const statusClass = clip.status === 'success' ? 'success' : 'failed';
     const statusLabel = clip.status === 'success' ? 'Success' : 'Failed';
+    const url = typeof clip.url === 'string' ? clip.url : '';
+    const safeUrlLink = getClippablePageError(url)
+      ? `<span>${escapeHtml(truncateUrl(url))}</span>`
+      : `<a href="${escapeHtml(url)}" target="_blank" rel="noopener">${escapeHtml(truncateUrl(url))}</a>`;
+    const encodedTimestamp = encodeURIComponent(String(clip.timestamp || ''));
 
     return `
       <div class="clip-item ${statusClass}" data-index="${index}">
         <div class="clip-header">
           <div class="clip-title">${escapeHtml(clip.title || 'Untitled')}</div>
-          <div class="clip-status status-${clip.status}">${statusLabel}</div>
+          <div class="clip-status status-${statusClass}">${statusLabel}</div>
         </div>
         <div class="clip-meta">
           <div class="clip-url">
-            <a href="${escapeHtml(clip.url)}" target="_blank" rel="noopener">${escapeHtml(truncateUrl(clip.url))}</a>
+            ${safeUrlLink}
           </div>
           <div class="clip-time">${formatTime(clip.timestamp)}</div>
         </div>
@@ -52,7 +59,7 @@ function renderHistory(clips) {
           <button class="action-btn open-url-btn" data-url="${encodeURIComponent(clip.url)}">🔗 Open URL</button>
           ${clip.filename ? `<button class="action-btn show-folder-btn" data-filename="${encodeURIComponent(clip.filename)}">📁 Show File</button>` : ''}
           <button class="action-btn reclip-btn" data-url="${encodeURIComponent(clip.url)}">🔄 Re-clip</button>
-          <button class="action-btn delete-btn" data-timestamp="${clip.timestamp}">🗑️ Delete</button>
+          <button class="action-btn delete-btn" data-timestamp="${encodedTimestamp}">🗑️ Delete</button>
         </div>
       </div>
     `;
@@ -97,7 +104,7 @@ function setupActionButtons(container) {
         console.error('No URL data for reclip button');
       }
     } else if (btn.classList.contains('delete-btn')) {
-      const timestamp = btn.dataset.timestamp;
+      const timestamp = btn.dataset.timestamp ? decodeURIComponent(btn.dataset.timestamp) : null;
       if (timestamp) {
         console.log('Deleting clip with timestamp:', timestamp);
         deleteClip(timestamp);
@@ -273,6 +280,11 @@ function clearHistory() {
 
 function openUrl(url) {
   if (!url) return;
+  const pageError = getClippablePageError(url);
+  if (pageError) {
+    alert(pageError);
+    return;
+  }
   chrome.tabs.create({ url: url });
 }
 
@@ -292,6 +304,13 @@ function reclip(url) {
     return;
   }
 
+  const pageError = getClippablePageError(url);
+  if (pageError) {
+    console.warn('Re-clip blocked:', pageError, url);
+    alert(pageError);
+    return;
+  }
+
   console.log('Initiating re-clip for:', url);
 
   // Open the URL in a new tab and trigger clipping via message to background
@@ -302,39 +321,43 @@ function reclip(url) {
       return;
     }
 
-    // Wait for page to load then trigger clipping via background script
-    const listener = (tabId, changeInfo) => {
-      if (tabId === tab.id && changeInfo.status === 'complete') {
-        chrome.tabs.onUpdated.removeListener(listener);
+    let clipTriggered = false;
+    const triggerClip = () => {
+      if (clipTriggered) return;
+      clipTriggered = true;
+      chrome.tabs.onUpdated.removeListener(listener);
 
-        // Small delay to ensure page is ready
-        setTimeout(() => {
-          // Send message to background script to trigger clip
-          chrome.runtime.sendMessage({
-            type: 'CLIP_TAB',
-            tabId: tab.id
-          }, (response) => {
-            if (chrome.runtime.lastError) {
-              console.error('Failed to send clip message:', chrome.runtime.lastError);
-              // Fallback: try injecting content script directly
-              chrome.scripting.executeScript({
-                target: { tabId: tab.id },
-                files: ['content.js']
-              }).then(() => {
-                console.log('Re-clip triggered via content script for:', url);
-              }).catch(err => {
-                console.error('Failed to re-clip:', err);
-                alert('Failed to re-clip. Please click the extension icon manually.');
-              });
-            } else {
-              console.log('Re-clip response:', response);
-            }
-          });
-        }, 1500);
-      }
+      setTimeout(() => {
+        chrome.runtime.sendMessage({
+          type: 'CLIP_TAB',
+          tabId: tab.id
+        }, (response) => {
+          if (chrome.runtime.lastError) {
+            console.error('Failed to send clip message:', chrome.runtime.lastError);
+            chrome.scripting.executeScript({
+              target: { tabId: tab.id },
+              files: ['content.js']
+            }).then(() => {
+              console.log('Re-clip triggered via content script for:', url);
+            }).catch(err => {
+              console.error('Failed to re-clip:', err);
+              alert('Failed to re-clip. Please click the extension icon manually.');
+            });
+          } else {
+            console.log('Re-clip response:', response);
+          }
+        });
+      }, 1500);
+    };
+
+    const listener = (tabId, changeInfo) => {
+      if (tabId === tab.id && changeInfo.status === 'complete') triggerClip();
     };
 
     chrome.tabs.onUpdated.addListener(listener);
+    chrome.tabs.get(tab.id, currentTab => {
+      if (!chrome.runtime.lastError && currentTab?.status === 'complete') triggerClip();
+    });
 
     // Timeout fallback - remove listener after 30 seconds
     setTimeout(() => {

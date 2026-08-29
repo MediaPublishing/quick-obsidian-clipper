@@ -109,16 +109,96 @@
     }
 
     @media (max-width: 768px) {
+      .container {
+        padding: 28px 16px;
+      }
+
+      header {
+        margin-bottom: 32px;
+        padding-bottom: 24px;
+      }
+
+      .logo {
+        align-items: flex-start;
+      }
+
+      .logo > div:last-child {
+        min-width: 0;
+      }
+
+      .logo-icon {
+        width: 40px;
+        height: 40px;
+        flex: 0 0 40px;
+        font-size: 20px;
+      }
+
+      h1 {
+        font-size: 34px;
+        overflow-wrap: anywhere;
+      }
+
+      .subtitle {
+        font-size: 13px;
+      }
+
       .grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 24px;
+        margin-bottom: 36px;
+      }
+
+      .section {
+        padding: 20px;
+        min-width: 0;
+      }
+
+      .section-title {
+        font-size: 23px;
+      }
+
+      .data-row {
         grid-template-columns: 1fr;
+        gap: 8px;
+      }
+
+      .data-row > *,
+      .stats > * {
+        min-width: 0;
       }
 
       .stats.health-stats {
         grid-template-columns: repeat(2, 1fr);
       }
 
+      .stats {
+        gap: 8px;
+      }
+
+      .stat {
+        padding: 14px 8px;
+      }
+
+      .stat-value {
+        font-size: 36px;
+      }
+
       .sync-actions {
         flex-direction: column;
+      }
+
+      .container .actions {
+        grid-template-columns: 1fr 1fr;
+        position: static;
+      }
+
+      .container .actions .btn:first-child {
+        grid-column: 1 / -1;
+      }
+
+      .container .actions .btn {
+        font-size: 10px;
+        letter-spacing: 0.02em;
       }
     }
 
@@ -290,13 +370,9 @@
     .sync-actions {
       display: flex;
       gap: 12px;
-      margin-top: 20px;
-      padding-top: 16px;
-      border-top: 1px solid var(--gray-200);
-      position: sticky;
-      bottom: 12px;
-      z-index: 2;
-      background: var(--white);
+      margin: 0 0 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--gray-200);
     }
 
     .sync-actions .btn {
@@ -328,9 +404,24 @@
 
     /* Buttons */
     .actions {
-      display: flex;
-      gap: 16px;
-      margin-top: 40px;
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+      margin: 0 0 28px;
+      padding: 12px;
+      position: sticky;
+      top: 12px;
+      z-index: 20;
+      background: rgba(255, 255, 255, 0.96);
+      border: 2px solid var(--black);
+      box-shadow: 4px 4px 0 var(--black);
+      backdrop-filter: blur(8px);
+    }
+
+    .actions .btn {
+      min-width: 0;
+      padding: 12px 10px;
+      font-size: 12px;
     }
 
     .btn {
@@ -437,6 +528,26 @@
       background-size: 1000px 100%;
       animation: shimmer 2s infinite;
     }
+
+    @media (prefers-reduced-motion: reduce) {
+      .status-led,
+      .loading {
+        animation: none;
+      }
+
+      .section,
+      .logo-icon,
+      .btn,
+      .btn::before,
+      .path-action {
+        transition: none;
+      }
+
+      .section:hover,
+      .logo-icon:hover {
+        transform: none;
+      }
+    }
   </style>
 </head>
 <body>
@@ -450,6 +561,26 @@
         </div>
       </div>
     </header>
+
+    <!-- Main Actions -->
+    <div class="actions" aria-label="Quick actions">
+      <button class="btn btn-primary" id="view-history">
+        <span>View Full History</span>
+      </button>
+      <button class="btn btn-primary" id="bulk-clip-tabs" title="Clip all tabs in current window (Ctrl+Shift+A)">
+        <span>Bulk Clip All Tabs</span>
+      </button>
+      <button class="btn btn-secondary" id="refresh-stats">
+        <span>Refresh Data</span>
+      </button>
+      <button class="btn btn-secondary" id="export-settings">
+        <span>Export Settings</span>
+      </button>
+      <button class="btn btn-secondary" id="import-settings">
+        <span>Import Settings</span>
+      </button>
+      <input type="file" id="import-file-input" accept=".json" style="display: none;">
+    </div>
 
     <div class="grid">
       <!-- Download Location Section -->
@@ -466,7 +597,7 @@
           <div style="width: 100%;">
             <div style="display: flex; gap: 8px; margin-bottom: 8px;">
               <input type="text" id="custom-download-path" placeholder="Obsidian-Clips"
-                     style="flex: 1; padding: 10px 14px; border: 2px solid var(--border); border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 13px;">
+                     style="flex: 1; min-width: 0; padding: 10px 14px; border: 2px solid var(--border); border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 13px;">
             </div>
             <div style="display: flex; gap: 8px;">
               <button id="save-custom-path" class="btn btn-primary" style="padding: 8px 16px; font-size: 12px;">
@@ -643,11 +774,11 @@
         <div class="data-row" id="prefix-rules-section" style="display: none;">
           <div class="data-label">Prefix Rules</div>
           <div style="width: 100%;">
-            <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+            <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
               <input type="text" id="new-prefix-domain" placeholder="Domain (e.g., youtube.com)"
-                     style="flex: 1; padding: 10px 14px; border: 2px solid var(--border); border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 13px;">
+                     style="flex: 2 1 160px; min-width: 0; padding: 10px 14px; border: 2px solid var(--border); border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 13px;">
               <input type="text" id="new-prefix-value" placeholder="Prefix (e.g., yt)"
-                     style="width: 140px; padding: 10px 14px; border: 2px solid var(--border); border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 13px;">
+                     style="flex: 1 1 110px; min-width: 0; padding: 10px 14px; border: 2px solid var(--border); border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 13px;">
               <button id="add-prefix-rule" class="button button-secondary" style="padding: 10px 16px; white-space: nowrap;">
                 <span>+ Add</span>
               </button>
@@ -676,6 +807,15 @@
             <span class="status-led" id="twitter-sync-led"></span>
             X-Bookmark Sync
           </h2>
+        </div>
+
+        <div class="sync-actions">
+          <button class="btn btn-primary" id="sync-twitter-now">
+            <span>↻ Run X-Bookmark Sync</span>
+          </button>
+          <button class="btn btn-secondary" id="reset-twitter-tracking">
+            <span>Reset X Sync History</span>
+          </button>
         </div>
 
         <div class="data-row">
@@ -730,35 +870,7 @@
           <strong>How it works:</strong> X bookmarks are checked on the selected schedule. Current bookmarks is the number found in X, New this sync is what was added in the latest run, and Already tracked is what was skipped because its ID is already stored locally. Moving the Markdown files does not reset tracking.
         </div>
 
-        <div class="sync-actions">
-          <button class="btn btn-primary" id="sync-twitter-now">
-            <span>↻ Run X-Bookmark Sync</span>
-          </button>
-          <button class="btn btn-secondary" id="reset-twitter-tracking">
-            <span>Reset X Sync History</span>
-          </button>
-        </div>
       </div>
-    </div>
-
-    <!-- Main Actions -->
-    <div class="actions">
-      <button class="btn btn-primary" id="view-history">
-        <span>📋 View Full History</span>
-      </button>
-      <button class="btn btn-primary" id="bulk-clip-tabs" title="Clip all tabs in current window (Ctrl+Shift+A)">
-        <span>📑 Bulk Clip All Tabs</span>
-      </button>
-      <button class="btn btn-secondary" id="refresh-stats">
-        <span>🔄 Refresh Data</span>
-      </button>
-      <button class="btn btn-secondary" id="export-settings">
-        <span>💾 Export Settings</span>
-      </button>
-      <button class="btn btn-secondary" id="import-settings">
-        <span>📥 Import Settings</span>
-      </button>
-      <input type="file" id="import-file-input" accept=".json" style="display: none;">
     </div>
 
     <footer>
