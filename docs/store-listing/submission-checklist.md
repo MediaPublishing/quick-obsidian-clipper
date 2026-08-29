@@ -149,7 +149,7 @@ Begründung:
 
 - Item: `Quick Obsidian Clipper`
 - Item-ID: `cjhbghekkonbpcibkbogbcemepolpnnl`
-- Dashboard: https://chrome.google.com/webstore/devconsole/f4d05cd2-3bae-4a4b-ac47-ed6b1dfdcacc/cjhbghekkonbpcibkbogbcemepolpnnl/edit
+- Dashboard: Open the Chrome Web Store Developer Dashboard and select the Quick Obsidian Clipper item.
 - Submitted at: `2026-08-24`, America/New_York session
 - Dashboard status after submission: `Pending review`
 - Post-review behaviour: automatic publication was enabled in the submit dialog.
