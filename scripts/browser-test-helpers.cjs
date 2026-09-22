@@ -26,16 +26,18 @@ function loadPlaywright() {
 const { chromium } = loadPlaywright();
 
 async function launchExtensionContext(profilePrefix, viewport) {
+  const extensionRoot = path.resolve(process.env.QOC_EXTENSION_ROOT || repo);
   const profile = await mkdtemp(path.join(os.tmpdir(), profilePrefix));
   const context = await chromium.launchPersistentContext(profile, {
     headless: false,
     viewport,
     args: [
-      `--disable-extensions-except=${repo}`,
-      `--load-extension=${repo}`
+      `--disable-extensions-except=${extensionRoot}`,
+      `--load-extension=${extensionRoot}`
     ]
   });
   context.qocProfilePath = profile;
+  context.qocExtensionRoot = extensionRoot;
   return context;
 }
 

@@ -1,8 +1,8 @@
 ---
-date: 2026-08-23
-status: ready-for-submission
+date: 2026-08-30
+status: release-candidate-copy
 lang: en
-version: 2.4.16
+version: 2.4.18
 ---
 
 # Quick Obsidian Clipper — Store Description (English)
@@ -45,11 +45,11 @@ A green badge on the extension icon marks pages you have already clipped. A warn
 | YouTube | Video title, description, metadata, transcript (if available) |
 | Twitter/X | Tweet content, author, engagement numbers, replies |
 | Perplexity | AI search results with source citations |
-| Medium | Full article text (optional Freedium integration for paywalled posts) |
-| Any paywalled site | Optional routing through archive.ph for full content |
+| Medium | Article text, with optional user-triggered Freedium routing |
+| Archived pages | Optional user-triggered routing through archive.ph |
 
 **Custom download path**
-Set the exact folder where clips are saved in the Options page.
+Set a subfolder inside the browser's Downloads directory and open the detected local location from the Options page.
 
 ### Permissions used
 
@@ -61,13 +61,13 @@ Set the exact folder where clips are saved in the Options page.
 | `scripting` | Injects the content extractor into the active tab |
 | `notifications` | Confirms when a clip has been saved |
 | `downloads` | Saves the Markdown file to your local filesystem |
-| `alarms` | Clears the duplicate-detection badge after a configurable timeout |
+| `alarms` | Runs optional scheduled X bookmark syncing and queued retry processing |
 | `contextMenus` | Adds right-click options for clipping images, links, and selections |
 | `<all_urls>` | Required so the content extractor can run on any site you choose to clip |
 
-### No external services
+### Local-first processing
 
-The extension does not send your content to any external server. All processing happens in your browser. The optional archive.ph routing opens a tab to archive.ph at your explicit request and is disabled by default.
+The extension does not upload clips, history, or settings to the developer. Extraction and Markdown creation happen in your browser. Optional X bookmark sync opens x.com in your signed-in browser session. Optional archive.ph and Freedium routing contacts those independent services only after you enable or trigger the feature.
 
 ---
 

@@ -1798,20 +1798,45 @@ async function tryInjectScriptFiles(tabId, files, label) {
     console.log(`${label} injection succeeded:`, result);
     return true;
   } catch (error) {
-    console.error(`${label} injection FAILED for files:`, files);
-    console.error(`${label} injection error:`, error.message);
-    console.error(`${label} injection error details:`, error);
-    return false;
+    const log = /Frame with ID \d+ was removed|frame was removed/i.test(error.message)
+      ? console.warn
+      : console.error;
+    log(`${label} injection interrupted for ${files[0]}: ${error.message}`);
+    throw error;
   }
 }
 
-async function injectScriptFilesWithFallback(tabId, primaryFiles, fallbackFiles, label) {
-  const injectedPrimary = await tryInjectScriptFiles(tabId, primaryFiles, label);
-  if (injectedPrimary || !fallbackFiles?.length) {
-    return injectedPrimary;
-  }
+async function injectScriptFilesWithNavigationRetry(tabId, files, label) {
+  try {
+    return await tryInjectScriptFiles(tabId, files, label);
+  } catch (error) {
+    if (/No tab with id|tab was closed/i.test(error.message)) {
+      throw new Error('The page tab was closed before clipping finished.', { cause: error });
+    }
+    if (!/Frame with ID \d+ was removed|frame was removed/i.test(error.message)) {
+      return false;
+    }
 
-  return tryInjectScriptFiles(tabId, fallbackFiles, `${label} (fallback)`);
+    // X can replace its main frame during redirects even after a tab reports
+    // "complete". Retry the packaged file only after the new frame is ready.
+    let tab;
+    try {
+      tab = await chrome.tabs.get(tabId);
+    } catch (tabError) {
+      throw new Error('The page tab was closed before clipping finished.', { cause: tabError });
+    }
+    const pageError = getClippablePageError(tab.url);
+    if (pageError) throw new Error(pageError);
+    await waitForTabLoad(tabId);
+    try {
+      return await tryInjectScriptFiles(tabId, files, `${label} (after navigation)`);
+    } catch (retryError) {
+      if (/No tab with id|tab was closed|Frame with ID \d+ was removed|frame was removed/i.test(retryError.message)) {
+        throw new Error('The page changed or closed while clipping. Please try again after it finishes loading.', { cause: retryError });
+      }
+      return false;
+    }
+  }
 }
 
 // Track pending extractions by tab ID
@@ -2671,10 +2696,9 @@ async function handleYouTubeVideo(tab) {
 async function handleTwitterPage(tab) {
   console.log('Twitter/X page detected, using dedicated handler...');
 
-  const handlerInjected = await injectScriptFilesWithFallback(
+  const handlerInjected = await injectScriptFilesWithNavigationRetry(
     tab.id,
     ['src/handlers/twitter-handler.js'],
-    ['twitter-handler.js'],
     'Twitter handler'
   );
 
@@ -2998,10 +3022,9 @@ async function handleTwitterBookmarkSync() {
     await waitForTabLoad(tab.id);
 
     // Inject bookmark scraper script
-    const scraperInjected = await injectScriptFilesWithFallback(
+    const scraperInjected = await injectScriptFilesWithNavigationRetry(
       tab.id,
       ['src/handlers/twitter-bookmark-scraper.js'],
-      ['twitter-bookmark-scraper.js'],
       'Twitter bookmark scraper'
     );
 
@@ -3143,10 +3166,9 @@ async function clipTweetFromBookmark(bookmark) {
     // Use the dedicated Twitter handler instead of generic content.js
     // This ensures we use the updated DOM selectors for 2026 X.com
     console.log(`📋 clipTweetFromBookmark: Injecting Twitter handler...`);
-    const handlerInjected = await injectScriptFilesWithFallback(
+    const handlerInjected = await injectScriptFilesWithNavigationRetry(
       tab.id,
       ['src/handlers/twitter-handler.js'],
-      ['twitter-handler.js'],
       'Twitter handler'
     );
     console.log(`📋 clipTweetFromBookmark: Handler injection result: ${handlerInjected}`);

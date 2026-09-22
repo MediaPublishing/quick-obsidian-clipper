@@ -1,7 +1,7 @@
 ---
-date: 2026-08-24
-version: 2.4.16
-status: submitted-pending-review
+date: 2026-08-30
+version: 2.4.18
+status: published-live
 ---
 
 # Chrome Web Store Submission Metadata
@@ -61,8 +61,9 @@ status: submitted-pending-review
 |---|---|
 | Screenshot uploaded to CWS, 1280x800 JPEG | `docs/store-listing/assets/screenshot-01-options-1280x800.jpg` |
 | Promotional tile uploaded to CWS, 440x280 JPEG | `docs/store-listing/assets/promo-tile-440x280.jpg` |
-| Upload ZIP | `dist/quick-obsidian-clipper-v2.4.16-chrome-store.zip` |
+| Local capture-freshness manifest | `docs/store-listing/assets/capture-manifest-v2.4.18.json` |
+| Upload ZIP | `dist/quick-obsidian-clipper-v2.4.18-chrome-store.zip` |
 
 ## Submission status
 
-Submitted through the Media Publishing developer dashboard on 2026-08-24. The dashboard reports `Pending review` for item ID `cjhbghekkonbpcibkbogbcemepolpnnl`. Automatic publication after a successful review was enabled.
+Version `2.4.17` was submitted through the Media Publishing developer dashboard. The public Store listing returned HTTP 200 and displayed version `2.4.17`, updated August 29, 2026, in the read-only verification on 2026-09-22. The developer dashboard now shows version `2.4.18` as Draft and `2.4.17` as Published. The update has not been submitted for review or published.

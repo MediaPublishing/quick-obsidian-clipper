@@ -1,11 +1,13 @@
 ---
-date: 2026-08-24
-status: v2.4.17-release-candidate-prepared
+date: 2026-08-30
+status: v2.4.18-store-draft-uploaded-review-pending
 ---
 
 # Quick Obsidian Clipper — Submission Checklist
 
-> Eingereicht am 2026-08-24. Google zeigt `Pending review`. Nach bestandener Review wird das Item automatisch veröffentlicht.
+> Version `2.4.17` ist öffentlich im Chrome Web Store verfügbar. Der read-only Live-Check vom 2026-08-30 lieferte HTTP 200, Version `2.4.17` und Updated `August 29, 2026`.
+
+> Das Fehlerbehebungs-Update `2.4.18` ist lokal in Comet geladen und im Store-Dashboard als Draft hochgeladen. Published bleibt `2.4.17`; die Review-Submission ist noch nicht erfolgt. Die öffentliche Privacy Policy ist weiterhin veraltet und muss vor einer Submission aktualisiert werden.
 
 ---
 
@@ -83,7 +85,7 @@ Begründung:
 - Das Kernfeature (Seite → Markdown → Download) ist eindeutig nicht missbräuchlich.
 - **Hauptrisiko:** `<all_urls>` + `scripting` zusammen triggern manuelle Review. Kann zu Verzögerung führen (typisch 7–14 Tage statt 1–3 Tage).
 - Die archive.ph-Funktion könnte als "circumventing paywalls" eingeordnet werden — dies sollte in der Listing-Beschreibung vorsichtig formuliert werden (nicht "bypass paywall", sondern "access cached/archived version").
-- Keine Twitter/X-Automation, kein ToS-Risiko auf Plattform-Seite für dieses Tool.
+- Der optionale X-Bookmark-Sync automatisiert das Lesen der eigenen Bookmark-Seite in der bestehenden Browser-Sitzung. Er ist standardmäßig deaktiviert, speichert IDs lokal und bleibt ein mögliches Review- beziehungsweise Plattform-Risiko, das im Listing offengelegt wird.
 
 **Empfehlung:** `<all_urls>` im Listing klar begründen, archive.ph als "optional archiving feature" (nicht "paywall bypass") beschreiben.
 
@@ -129,7 +131,7 @@ Begründung:
 - [x] Store-Icon, Screenshot (1280x800 JPEG) und Small Promo Tile (440x280 JPEG) hochgeladen.
 - [x] Privacy-Angaben, Remote-Code-Antwort, Datenverwendungs-Disclosures und drei Zertifizierungen ausgefüllt.
 - [x] Distribution: kostenlos, öffentlich, alle Regionen.
-- [x] Store-interne Überprüfung gestartet; Status ist `Pending review`.
+- [x] Store-Review abgeschlossen; Version `2.4.17` ist öffentlich erreichbar.
 
 ---
 
@@ -165,27 +167,33 @@ Begründung:
 
 ---
 
-## v2.4.17 Release Candidate 2026-08-24
+## v2.4.17 Release Candidate 2026-08-30
 
-**Nicht im Chrome Web Store hochgeladen.** Diese Version ist lokal vorbereitet und wartet auf Owner-Freigabe.
+**Store-Status:** Der öffentliche read-only Store-Check vom 2026-08-30 zeigt Version `2.4.17`, aktualisiert am 2026-08-29. Dieser RC-Lauf führt keinen Upload, keine Submission, kein Deployment und keine Store-Änderung aus.
 
 ### Änderungen
 
 - Repariert: `CLIP_TAB` rief die nicht existierende Funktion `handleClip()` auf. Der History-Reclip verwendet jetzt `getSettings()` plus `clipTabSmart()` und damit denselben geprüften Routing-Pfad wie normale Clips.
 - Landingpage hinzugefügt: <https://quick-obsidian-clipper.pages.dev>
-- Produkt-Screenshot aus der aktuellen Optionsseite erzeugt.
+- Optionsseite und X-Bookmark-Sync-Übersicht überarbeitet; Kennzahlen, Speicherort-Aktion und sichtbare Hauptaktionen sind eindeutig beschriftet.
+- Der Store-Paketbau ist bytegenau reproduzierbar: feste Zeitstempel, sortierte Einträge und entfernte variable ZIP-Metadaten.
+- Listing-Texte und Datenschutzangaben beschreiben X-Sync, `alarms`, archive.ph und Freedium korrekt.
 
 ### Lokale Tests
 
 ```text
 node --check background-simple.js
+node --check options.js
 node scripts/test-url-guards.mjs
 node scripts/test-twitter-bookmark-scraper.mjs
+node scripts/test-history-reclip.cjs
+node scripts/test-options-runtime.cjs
 node scripts/test-landing-browser.cjs
 node scripts/capture-options-screenshot.cjs
+node scripts/check-release-candidate.mjs
 ```
 
-Alle genannten Checks wurden ohne Fehler ausgeführt. Der isolierte E2E-Lauf bestätigte:
+Die aktuellen Resultate und der finale SHA-256 stehen im separaten RC-Beleg `release-candidate-v2.4.17-receipt.md`.
 
 - Normaler Clip: `success: true`, Markdown-Download-ID `1`.
 - Zweiter Clip derselben URL: Duplicate Detection aktiv, Download-ID `2`, zwei History-Einträge.
@@ -195,7 +203,7 @@ Alle genannten Checks wurden ohne Fehler ausgeführt. Der isolierte E2E-Lauf bes
 
 - Version: `2.4.17`
 - ZIP: `dist/quick-obsidian-clipper-v2.4.17-chrome-store.zip`
-- SHA-256: `89a203d03f1d1b6b473ec1a64d2cdc0c19861cc3ffea63e5ff5f511bbc7916fa`
-- Inhalt: 32 Laufzeitdateien; keine `.git`-, `docs`-, `archive`-, `scripts`- oder `.DS_Store`-Einträge.
-- Checks: Manifest-Version `2.4.17`, JavaScript-Syntaxcheck, URL-Guard-Tests, X-Sync-Scraper-Fallbacktest, Landingpage-Browser-QA und ZIP-Integritätstest.
-- Store-Aktion: keine; Upload und Submission bleiben gesperrt.
+- SHA-256: siehe `release-candidate-v2.4.17-receipt.md`
+- Inhalt: ausschließlich Laufzeitdateien; keine `.git`-, `docs`-, `archive`-, `scripts`-, `.env`- oder `.DS_Store`-Einträge.
+- Checks: Manifest-/Listing-Konsistenz, JavaScript-Syntax, URL-Guards, X-Sync-Scraper, History-Reclip, Options-Runtime, Landing-Browser-QA, Screenshot-Capture, ZIP-Integrität und zwei identische Rebuilds.
+- Store-Aktion dieses Laufs: keine.
