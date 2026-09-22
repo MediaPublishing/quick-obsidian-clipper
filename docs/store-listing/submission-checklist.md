@@ -1,13 +1,13 @@
 ---
 date: 2026-08-30
-status: v2.4.18-local-verified-store-upload-pending
+status: v2.4.18-store-draft-uploaded-review-pending
 ---
 
 # Quick Obsidian Clipper — Submission Checklist
 
 > Version `2.4.17` ist öffentlich im Chrome Web Store verfügbar. Der read-only Live-Check vom 2026-08-30 lieferte HTTP 200, Version `2.4.17` und Updated `August 29, 2026`.
 
-> Das Fehlerbehebungs-Update `2.4.18` ist lokal vorbereitet und in Comet geladen. Store-Upload und Review sind noch nicht nachgewiesen. Die öffentliche Privacy Policy ist weiterhin veraltet und muss vor einer Submission aktualisiert werden.
+> Das Fehlerbehebungs-Update `2.4.18` ist lokal in Comet geladen und im Store-Dashboard als Draft hochgeladen. Published bleibt `2.4.17`; die Review-Submission ist noch nicht erfolgt. Die öffentliche Privacy Policy ist weiterhin veraltet und muss vor einer Submission aktualisiert werden.
 
 ---
 

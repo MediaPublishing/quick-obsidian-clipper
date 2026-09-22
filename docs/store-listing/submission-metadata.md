@@ -66,4 +66,4 @@ status: published-live
 
 ## Submission status
 
-Version `2.4.17` was submitted through the Media Publishing developer dashboard. The public Store listing returned HTTP 200 and displayed version `2.4.17`, updated August 29, 2026, in the read-only verification on 2026-09-22. Version `2.4.18` is the prepared update; its upload and review status must be recorded separately after the developer dashboard readback.
+Version `2.4.17` was submitted through the Media Publishing developer dashboard. The public Store listing returned HTTP 200 and displayed version `2.4.17`, updated August 29, 2026, in the read-only verification on 2026-09-22. The developer dashboard now shows version `2.4.18` as Draft and `2.4.17` as Published. The update has not been submitted for review or published.

@@ -1,7 +1,7 @@
 ---
 date: 2026-09-22
 version: 2.4.18
-status: local-and-comet-verified-store-upload-pending
+status: local-and-comet-verified-store-draft-uploaded-review-pending
 ---
 
 # Quick Obsidian Clipper 2.4.18 – Release-Receipt
@@ -26,8 +26,8 @@ status: local-and-comet-verified-store-upload-pending
 ## Externer Status und offene Grenzen
 
 - Öffentliche Store-Version bei der letzten Read-only-Prüfung: `2.4.17`.
-- Store-Upload/Review/Publikation von `2.4.18`: noch nicht bestätigt.
-- Der interne Store-Browser verlangt erneut eine Google-Passkey-Bestätigung durch den Kontoinhaber.
+- Store-Dashboard: Paket-Upload bestätigt. **Draft `2.4.18`**, Published `2.4.17`; Review-Submission und Publikation noch nicht erfolgt.
+- Die Google-Passkey-Bestätigung wurde vom Kontoinhaber im internen Browser abgeschlossen; keine Anmeldedaten wurden gelesen oder gespeichert.
 - Öffentliche Privacy Policy unter der im Store hinterlegten GitHub-Pages-URL: HTTP 200, aber noch Stand `2026-08-23` ohne X-Bookmark-Sync-Offenlegung. Vor einer Review-Submission aktualisieren.
 - Kein Live-E2E mit einer eingeloggten X-Bookmark-Sitzung behauptet; die Regression wurde deterministisch mit Chrome-API-Mocks getestet.
 
