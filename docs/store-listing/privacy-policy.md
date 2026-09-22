@@ -1,18 +1,18 @@
 ---
-date: 2026-08-23
-status: published-on-github-pages
-version: 2.4.16
+date: 2026-08-30
+status: release-candidate-copy
+version: 2.4.18
 ---
 
 # Quick Obsidian Clipper — Privacy Policy
 
-*Last updated: 2026-08-23*
+*Last updated: 2026-08-30*
 
 ---
 
 ## 1. Summary
 
-Quick Obsidian Clipper does not collect, transmit, or share personal data with the developer or any third party. All data is stored locally on your device and written to your local filesystem.
+Quick Obsidian Clipper does not collect or transmit clips, history, or settings to the developer. Extraction and Markdown creation happen locally in the browser. Optional features can open or navigate to x.com, archive.ph, or Freedium only when the user enables or triggers them, as described below.
 
 ---
 
@@ -24,9 +24,10 @@ The extension stores the following data in Chrome's local extension storage (`ch
 |---|---|---|
 | Extension settings (download path, duplicate-detection window, per-site handler preferences) | Persists your configuration | `chrome.storage.local` |
 | Clip history (URL, normalized URL, timestamp of each clip) | Powers duplicate detection and the history page | `chrome.storage.local` |
+| X bookmark sync state (enabled flag, interval, processed post IDs, counters, last result) | Avoids duplicate imports and reports sync progress | `chrome.storage.local` |
 | Clipped content (full Markdown file with page text, title, URL, date) | Your actual clip | Local filesystem (Downloads folder) |
 
-None of this data is transmitted to any server.
+This locally stored data is not uploaded to the developer.
 
 ---
 
@@ -43,7 +44,7 @@ For site-specific handlers:
 - **Twitter/X**: Reads the tweet DOM for tweet text, author name, and engagement counters visible on the page.
 - **Perplexity**: Reads the search result DOM including source citations.
 
-None of this content is transmitted externally. It is formatted locally and downloaded to your filesystem.
+The extracted content is formatted locally and downloaded to your filesystem. Ordinary clipping does not upload the extracted Markdown to the developer.
 
 ---
 
@@ -53,9 +54,12 @@ None of this content is transmitted externally. It is formatted locally and down
 If you enable this feature for specific sites, the extension will open a new browser tab to `archive.ph` and navigate to that URL on your behalf. This is an explicit user-initiated action. Archive.ph is an independent service; their privacy practices are governed by their own policy.
 
 **Freedium routing (optional, off by default)**
-If enabled for Medium, the extension redirects Medium URLs through `freedium.cfd`. Freedium is an independent service with its own privacy practices.
+If enabled for Medium, the extension redirects Medium URLs through `freedium.cfd` or `freedium-mirror.cfd`. Freedium is an independent service with its own privacy practices.
 
-These optional features are disabled by default. No data is sent to these services without your explicit action.
+**X bookmark sync (optional, off by default)**
+If enabled, the extension opens the X bookmarks page in your existing signed-in browser session, reads bookmarked posts visible in that page, and saves new clips locally. Processed post IDs and sync counters remain in local extension storage. The extension does not receive or store your X password or session cookie.
+
+These optional features are disabled by default. They contact the named service only after you enable or trigger them.
 
 ---
 
@@ -67,7 +71,7 @@ The extension contains no analytics SDK, crash reporter, or telemetry of any kin
 
 ## 6. `<all_urls>` host permission
 
-The extension declares `<all_urls>` in its manifest. This is required so the content extractor can inject into any page you choose to clip. The extension only activates on pages when you explicitly trigger a clip action (icon click, keyboard shortcut, or context menu). It does not passively monitor or read pages you browse.
+The extension declares `<all_urls>` in its manifest. This is required so the content extractor can inject into any page you choose to clip and so optional bulk clipping and X bookmark sync can process user-selected or explicitly enabled pages. It does not passively monitor ordinary browsing.
 
 ---
 

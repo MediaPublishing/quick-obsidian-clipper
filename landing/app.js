@@ -8,10 +8,10 @@
       "nav.source": "Source",
       "hero.eyebrow": "Capture. Normalize. Sync.",
       "hero.title": "Save any web page straight into Obsidian.",
-      "hero.sub": "Quick Obsidian Clipper writes clean Markdown to your Downloads folder. No cloud account, no API keys, no content leaving your browser.",
+      "hero.sub": "Quick Obsidian Clipper writes clean Markdown to your Downloads folder. No cloud account, no API keys, and no developer-side copy of your clips.",
       "hero.ctaPrimary": "Install the extension",
       "hero.ctaSecondary": "See the workflow",
-      "hero.microcopy": "Manual install 2.4.17 · Chrome Web Store 2.4.16 · all processing stays local.",
+      "hero.microcopy": "Store version 2.4.17 · manual version 2.4.18 · all processing stays local.",
       "surface.label": "Clip preview",
       "surface.status": "Saved locally",
       "surface.file": "2026-08-24--research-article.md",
@@ -22,7 +22,7 @@
       "steps.sub": "The clip lands as a Markdown file first. Your folder sync or a manual move brings it into Obsidian.",
       "steps.one.num": "Step 01",
       "steps.one.title": "Load the extension",
-      "steps.one.body": "Use the published Chrome Web Store version, or load version 2.4.17 from the repository unpacked in Chrome, Brave, Arc or Edge.",
+      "steps.one.body": "Use the published Chrome Web Store version, or load version 2.4.18 from the repository unpacked in Chrome, Brave, Arc or Edge.",
       "steps.two.num": "Step 02",
       "steps.two.title": "Choose your subfolder",
       "steps.two.body": "Keep Obsidian-Clips or set a relative path below Downloads. Browser extensions cannot write to arbitrary absolute paths.",
@@ -60,10 +60,10 @@
       "nav.source": "Source",
       "hero.eyebrow": "Erfassen. Bereinigen. Synchronisieren.",
       "hero.title": "Speichere jede Webseite direkt für Obsidian.",
-      "hero.sub": "Quick Obsidian Clipper schreibt sauberes Markdown in deinen Downloads-Ordner. Kein Cloud-Konto, keine API-Keys und deine Inhalte verlassen den Browser nicht.",
+      "hero.sub": "Quick Obsidian Clipper schreibt sauberes Markdown in deinen Downloads-Ordner. Kein Cloud-Konto, keine API-Keys und keine Entwicklerkopie deiner Clips.",
       "hero.ctaPrimary": "Extension installieren",
       "hero.ctaSecondary": "Workflow ansehen",
-      "hero.microcopy": "Manuelle Installation 2.4.17 · Chrome Web Store 2.4.16 · alle Inhalte bleiben lokal.",
+      "hero.microcopy": "Store-Version 2.4.17 · manuelle Version 2.4.18 · alle Inhalte bleiben lokal.",
       "surface.label": "Clip-Vorschau",
       "surface.status": "Lokal gespeichert",
       "surface.file": "2026-08-24--research-article.md",
@@ -74,7 +74,7 @@
       "steps.sub": "Der Clip landet zuerst als Markdown-Datei. Dein Ordner-Sync oder ein manueller Move bringt ihn nach Obsidian.",
       "steps.one.num": "Schritt 01",
       "steps.one.title": "Extension laden",
-      "steps.one.body": "Nutze die veröffentlichte Chrome-Web-Store-Version oder lade Version 2.4.17 aus dem Repository unpacked in Chrome, Brave, Arc oder Edge.",
+      "steps.one.body": "Nutze die veröffentlichte Chrome-Web-Store-Version oder lade Version 2.4.18 aus dem Repository unpacked in Chrome, Brave, Arc oder Edge.",
       "steps.two.num": "Schritt 02",
       "steps.two.title": "Unterordner wählen",
       "steps.two.body": "Behalte Obsidian-Clips oder setze einen relativen Pfad unter Downloads. Extensions können nicht in beliebige absolute Pfade schreiben.",
@@ -132,8 +132,8 @@
         { value: "100%", label: "local processing before the file reaches disk" }
       ],
       installCards: [
-        { kicker: "Published", title: "Chrome Web Store", body: "The published store release supports normal browser updates. Version 2.4.17 is currently available through the manual install below.", cta: "Open store listing", href: "https://chromewebstore.google.com/detail/cjhbghekkonbpcibkbogbcemepolpnnl", status: "Version 2.4.16" },
-        { kicker: "Available now", title: "Manual unpacked install", body: "Clone the repository, enable Developer mode in your Chromium browser and load the project root.", cta: "Installation guide", href: "https://github.com/MediaPublishing/quick-obsidian-clipper#installation", status: "Version 2.4.17" }
+        { kicker: "Published", title: "Chrome Web Store", body: "Version 2.4.17 is live in the Chrome Web Store and supports normal browser updates.", cta: "Open store listing", href: "https://chromewebstore.google.com/detail/cjhbghekkonbpcibkbogbcemepolpnnl", status: "Version 2.4.17" },
+        { kicker: "Available now", title: "Manual unpacked install", body: "Clone the repository, enable Developer mode in your Chromium browser and load the project root.", cta: "Installation guide", href: "https://github.com/MediaPublishing/quick-obsidian-clipper#installation", status: "Version 2.4.18" }
       ],
       faqs: [
         { q: "Does it upload my articles anywhere?", a: "By default, extraction and Markdown creation stay local. Optional archive routing contacts archive.ph, and X sync contacts X only when you enable or run those features. No clip copy is sent to the developer." },
@@ -170,8 +170,8 @@
         { value: "100%", label: "lokale Verarbeitung, bevor die Datei auf die Platte kommt" }
       ],
       installCards: [
-        { kicker: "Veröffentlicht", title: "Chrome Web Store", body: "Die veröffentlichte Store-Version erhält normale Browser-Updates. Version 2.4.17 ist derzeit über die manuelle Installation unten verfügbar.", cta: "Store-Listing öffnen", href: "https://chromewebstore.google.com/detail/cjhbghekkonbpcibkbogbcemepolpnnl", status: "Version 2.4.16" },
-        { kicker: "Jetzt verfügbar", title: "Manuelle unpacked Installation", body: "Klone das Repository, aktiviere den Developer Mode im Chromium-Browser und lade das Projekt-Root.", cta: "Installationsanleitung", href: "https://github.com/MediaPublishing/quick-obsidian-clipper#installation", status: "Version 2.4.17" }
+        { kicker: "Veröffentlicht", title: "Chrome Web Store", body: "Version 2.4.17 ist im Chrome Web Store live und erhält normale Browser-Updates.", cta: "Store-Listing öffnen", href: "https://chromewebstore.google.com/detail/cjhbghekkonbpcibkbogbcemepolpnnl", status: "Version 2.4.17" },
+        { kicker: "Jetzt verfügbar", title: "Manuelle unpacked Installation", body: "Klone das Repository, aktiviere den Developer Mode im Chromium-Browser und lade das Projekt-Root.", cta: "Installationsanleitung", href: "https://github.com/MediaPublishing/quick-obsidian-clipper#installation", status: "Version 2.4.18" }
       ],
       faqs: [
         { q: "Werden Artikel irgendwo hochgeladen?", a: "Standardmäßig bleiben Extraktion und Markdown-Erstellung lokal. Optionale Archive-Routen kontaktieren archive.ph, und der X-Sync kontaktiert X nur, wenn du diese Funktionen aktivierst oder startest. Eine Clip-Kopie geht nie an den Entwickler." },

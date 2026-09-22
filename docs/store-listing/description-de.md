@@ -1,8 +1,8 @@
 ---
-date: 2026-08-23
-status: ready-for-submission
+date: 2026-08-30
+status: release-candidate-copy
 lang: de
-version: 2.4.16
+version: 2.4.18
 ---
 
 # Quick Obsidian Clipper — Store-Beschreibung (Deutsch)
@@ -44,12 +44,12 @@ Ein grünes Abzeichen auf dem Extension-Symbol zeigt bereits gespeicherte Seiten
 |---|---|
 | YouTube | Videotitel, Beschreibung, Metadaten, Transkript (falls verfügbar) |
 | Twitter/X | Tweet-Inhalt, Autor, Engagement-Zahlen, Antworten |
-| Perplexity | KI-Suchergebnisse mit Quellenangaben |
-| Medium | Vollständiger Artikeltext (optionale Freedium-Integration für Bezahlartikel) |
-| Bezahlschranken-Seiten | Optionale Weiterleitung über archive.ph für vollständigen Inhalt |
+| Perplexity | AI-Suchergebnisse mit Quellenangaben |
+| Medium | Artikeltext mit optionaler, nutzerinitiierter Freedium-Weiterleitung |
+| Archivierte Seiten | Optionale, nutzerinitiierte Weiterleitung über archive.ph |
 
 **Eigener Download-Pfad**
-Den genauen Speicherordner auf der Optionsseite festlegen.
+Einen Unterordner im Downloads-Verzeichnis des Browsers festlegen und den erkannten lokalen Speicherort direkt von der Optionsseite öffnen.
 
 ### Verwendete Berechtigungen
 
@@ -61,13 +61,13 @@ Den genauen Speicherordner auf der Optionsseite festlegen.
 | `scripting` | Injiziert den Inhalts-Extraktor in den aktiven Tab |
 | `notifications` | Bestätigt, dass ein Clip gespeichert wurde |
 | `downloads` | Speichert die Markdown-Datei im lokalen Dateisystem |
-| `alarms` | Setzt das Duplikat-Abzeichen nach einem konfigurierbaren Timeout zurück |
+| `alarms` | Führt optional den geplanten X-Bookmark-Sync und wartende Wiederholungen aus |
 | `contextMenus` | Fügt Rechtsklick-Optionen für Bilder, Links und Auswahlen hinzu |
 | `<all_urls>` | Erforderlich, damit der Inhalts-Extraktor auf jeder geclippten Seite laufen kann |
 
-### Keine externen Dienste
+### Lokale Verarbeitung
 
-Die Extension sendet deine Inhalte nicht an externe Server. Die gesamte Verarbeitung findet im Browser statt. Die optionale archive.ph-Weiterleitung öffnet auf deinen ausdrücklichen Wunsch einen Tab zu archive.ph und ist standardmäßig deaktiviert.
+Die Extension lädt Clips, Verlauf oder Einstellungen nicht zum Entwickler hoch. Extraktion und Markdown-Erstellung finden im Browser statt. Der optionale X-Bookmark-Sync öffnet x.com in deiner angemeldeten Browser-Sitzung. Optionale Weiterleitungen zu archive.ph und Freedium kontaktieren diese unabhängigen Dienste nur, wenn du die Funktion aktivierst oder auslöst.
 
 ---
 

@@ -76,11 +76,14 @@ async function readLandingState(page) {
     if (errors.length) throw new Error(`Browser errors: ${errors.join(' | ')}`);
     if (english.firstFeature !== 'One click and shortcuts') throw new Error(`Unexpected English feature title: ${english.firstFeature}`);
     if (german.firstFeature !== 'Ein Klick und Shortcuts') throw new Error(`German static content did not update: ${german.firstFeature}`);
-    if (english.storeVersion !== 'Version 2.4.16' || german.storeVersion !== 'Version 2.4.16') {
+    if (english.storeVersion !== 'Version 2.4.17' || german.storeVersion !== 'Version 2.4.17') {
       throw new Error(`Store version mismatch: en=${english.storeVersion}, de=${german.storeVersion}`);
     }
-    if (english.installVersion !== 'Version 2.4.17' || german.installVersion !== 'Version 2.4.17') {
+    if (english.installVersion !== 'Version 2.4.18' || german.installVersion !== 'Version 2.4.18') {
       throw new Error(`Landing version mismatch: en=${english.installVersion}, de=${german.installVersion}`);
+    }
+    if (english.imageSize.width !== 1425 || english.imageSize.height !== 2393) {
+      throw new Error(`Landing screenshot size mismatch: ${JSON.stringify(english.imageSize)}`);
     }
     console.log(JSON.stringify({ english, german }, null, 2));
   } finally {

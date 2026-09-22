@@ -257,6 +257,11 @@ cd quick-obsidian-clipper
 
 ## Changelog
 
+### v2.4.18 (2026-09-22)
+- Retry the packaged X handler after an X page replaces its main frame during navigation.
+- Stop cleanly when the source tab has closed instead of trying a nonexistent fallback file.
+- Added regression coverage for frame replacement, closed tabs, and missing handler files.
+
 ### v2.4.17 (2026-08-29)
 - Re-clip now blocks browser-internal URLs cleanly while normal web URLs continue through the clip workflow.
 - Overview and X-Bookmark Sync counters update automatically after storage changes without reloading the settings page.

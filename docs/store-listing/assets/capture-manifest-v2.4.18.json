@@ -1,0 +1,24 @@
+{
+  "version": "2.4.18",
+  "sourceHashes": {
+    "options-redesigned.html": "ed67dea4b32f3bda90391cbc99fa65a2408de7302889be45ae86d20a9619607e",
+    "options.js": "4af38f50b05214048283d29c720b71bc02e80c9cb89142160dd5c74ac481b93a",
+    "options.css": "9e8a2d8e9e52e093fb8ede962ab842bcd50a23adc8796178e0536e9541a3cfc0",
+    "icons/icon128.png": "5e5b9c5701f3b5178d7ce7f425ff6521b1d73a1793e3c1cb4c0c74935e35dac2",
+    "scripts/capture-options-screenshot.cjs": "df9a86145daaefdb64acc36ef2b0a59581de2e1378d00b30baad90ee38a33ba0"
+  },
+  "assetHashes": {
+    "screenshotPng": "6a802d1ff8f775d36f96dda835a7c46ff2ded400375ef62d09657b92ca11daa0",
+    "screenshotJpg": "ca98b0df4569bd193b64dcbc9c15a1b8240f34ee29b307fbb6e0186b3cb2cf50",
+    "tilePng": "24f242e7ec77f5853ffbad3cf1f2b58a56a1411d687a93c5b32bb4c4dea83709",
+    "tileJpg": "c2492e7d5ca0f6e6cc609605bcb40e56513ac86910f1fb8d1dce53e7837ad2ae"
+  },
+  "assertions": {
+    "storeViewport": {
+      "width": 1280,
+      "height": 800
+    },
+    "primaryActionsVisible": true,
+    "promoVersion": "v2.4.18"
+  }
+}
